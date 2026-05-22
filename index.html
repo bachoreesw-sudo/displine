@@ -480,57 +480,6 @@
   .main-action-card .mac-icon { font-size: 32px; }
   .main-action-card .mac-title { font-size: 14px; font-weight: 700; color: var(--text); }
   .main-action-card .mac-sub { font-size: 11px; color: var(--text3); font-family: 'Amiri', serif; }
-/* ============ WELCOME LOGO GREEN FRAME ============ */
-.welcome-logo-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 20px auto;
-  width: 100%;
-  max-width: 150px; /* ปรับขนาดความกว้างตามความเหมาะสมของหน้าจอ */
-  padding: 0 15px;
-}
-
-.green-frame {
-  width: 100%;
-  aspect-ratio: 16 / 10; /* อัตราส่วนสี่เหลี่ยมผืนผ้าแบบในรูปตัวอย่าง */
-  background: var(--primary-dark); /* ใช้สีเขียวเข้มจากตัวแปรของคุณ */
-  border: 3px solid var(--gold); /* เส้นขอบทองหนาด้านนอก */
-  border-radius: 8px;
-  padding: 1px; /* ระยะห่างให้เห็นเส้นขอบซ้อนกัน */
-  box-shadow: 0 8px 32px rgba(15, 74, 51, 0.3), inset 0 0 20px rgba(0,0,0,0.4);
-  position: relative;
-}
-
-/* เส้นขอบทองบางๆ เล็กๆ ด้านในกรอบ */
-.inner-border-line {
-  width: 100%;
-  height: 100%;
-  border: 1px solid rgba(200, 150, 42, 0.6); 
-  border-radius: 4px;
-  padding: 1px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-/* ตั้งค่าให้รูปภาพโลโก้ขยายเต็มพื้นที่กรอบสีเขียว */
-.logo-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover; /* ครอบตัดรูปให้เต็มพื้นที่กรอบโดยไม่เสียสัดส่วน */
-  border-radius: 2px;
-}
-
-/* จัดระเบียบการจัดวางข้อความต้อนรับเพิ่มเติม */
-.welcome-title {
-  text-align: center;
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--text);
-  margin-top: 15px;
-}
 
   /* ============ RESPONSIVE ============ */
   @media (min-width: 600px) {
@@ -545,21 +494,18 @@
      PAGE 1: WELCOME
 ============================== -->
 <div id="page-welcome" class="page active">
-  <div class="ornament" style="font-size:30px;">❋ ﷽ ❋</div>
-  <div class="basmala" style="font-size:25px; opacity:0.7;">اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِ سَيِّدِنَا مُحَمَّد</div>
-  <div class="basmala" style="font: size 17px; opacity:0.7;">โอ้ อัลลอฮ์ โปรดประทานพรและความจำเริญแก่<br>
-    ท่านนบีมูฮัมหมัดและแด่วงศ์วานของท่านศาสดามูฮัมหมัด</div>
-  <!-- ส่วนโลโก้กรอบสีเขียวทองแบบเต็มใบ -->
-  <div class="welcome-logo-container">
-    <div class="green-frame">
-      <div class="inner-border-line">
-        <img src="https://scontent.fhdy4-1.fna.fbcdn.net/v/t39.30808-6/687657078_122093038857312449_1009002414784607154_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=YyelyZhh4-IQ7kNvwFK6vu4&_nc_oc=AdrueUT7Xz-KVbsBNr86yJ4E06Xim7yZDJL5gjHWU1lDeNSL-kxPGACk-o-EsMXnUeF6IGfeIkMmVVnqCcaCuaDP&_nc_zt=23&_nc_ht=scontent.fhdy4-1.fna&_nc_gid=9eX5QVIwobVxaAg0H2vtpA&_nc_ss=7b2a8&oh=00_Af7o_5EM7yw-4iz8h_wvQRb8NYT1MvYVlSzOD8UWzWMBEw&oe=6A14FB3C" alt="Ba Yi Discipline" class="logo-image">
-      </div>
-    </div>
+  <div class="basmala">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+  <div class="ornament">﴾ ✦ ﴿</div>
+
+  <div class="welcome-logo">
+    <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M26 6 L30 18 L44 18 L33 27 L37 40 L26 32 L15 40 L19 27 L8 18 L22 18 Z" fill="rgba(255,255,255,0.9)"/>
+      <circle cx="26" cy="26" r="3" fill="rgba(255,255,255,0.5)"/>
+    </svg>
   </div>
 
   <div class="welcome-title">แบยี ต้องมีวินัย</div>
-  <div class="basmala" style="font-size:25px; opacity:0.7;">إِنَّ اللَّهَ يُحِبُّ الْمُتَوَكِّلِينَ</div>
+  <div class="basmala" style="font-size:14px; opacity:0.7;">إِنَّ اللَّهَ يُحِبُّ الْمُتَوَكِّلِينَ</div>
 
   <div class="welcome-quote geometric-frame">
     <div class="arabic">اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ</div>
@@ -580,7 +526,7 @@
     </button>
   </div>
 
-  
+  <div class="ornament" style="font-size:14px;">❋ ﷽ ❋</div>
 </div>
 
 
@@ -625,7 +571,7 @@
 
       <div class="divider"></div>
       <button class="btn btn-primary btn-full" onclick="doRegister()" style="padding:15px;">
-        ✨ สร้างบัญชี 
+        ✨ สร้างบัญชี — بِسْمِ اللَّهِ
       </button>
       <div style="text-align:center; margin-top:16px;">
         <span style="font-size:14px; color:var(--text3);">มีบัญชีแล้ว? </span>
@@ -685,9 +631,9 @@
   <!-- Topbar -->
   <div class="topbar">
     <div class="logo-text">
-      <img id="logo-img" src="https://scontent.fhdy4-1.fna.fbcdn.net/v/t39.30808-6/696187910_122100299517312449_1965577196789858038_n.jpg?stp=dst-jpg_s720x720_tt6&_nc_cat=110&ccb=1-7&_nc_sid=127cfc&_nc_ohc=c-6fvCemw7EQ7kNvwE0oK-P&_nc_oc=Adqv9SG_StmrKtjqeFN7Fh4voygH_bKXaLsOnZvZ9jsSJaOd7lm3sT9jR5JnJSWeXN0&_nc_zt=23&_nc_ht=scontent.fhdy4-1.fna&_nc_gid=0ZJRTfS6BIMx3lNMYgJ6jw&_nc_ss=7b2a8&oh=00_Af5lvpdV7XQPivfj_L6UBOVH_WYQAl4zsMsOVPN8fJh0Rg&oe=6A14F764" alt="logo" style="width:32px; height:32px; border-radius:8px; display:none;" onerror="this.style.display='none'">
+      <img id="logo-img" src="LOGO_URL_HERE" alt="logo" style="width:32px; height:32px; border-radius:8px; display:none;" onerror="this.style.display='none'">
       <span>✦</span>
-      <span style="font-size:16px;">แบยี ต้องมีระเบียบ</span>
+      <span style="font-size:16px;">แบยี</span>
       <span class="star">★</span>
     </div>
     <div style="display:flex; align-items:center; gap:10px;">
@@ -859,10 +805,9 @@
   <div class="motivate-screen">
     <div class="card card-gold" style="width:100%; max-width:360px; text-align:center; padding:20px;">
       <img id="motivate-img" src="" alt="motivate" style="width:100%; border-radius:12px; display:none; margin-bottom:12px;">
-      <div class="dua-image-container" style="width:100%; max-width: 320px; aspect-ratio: 1 / 1.4142; background: white; border-radius: 12px; box-shadow: var(--shadow-gold); overflow: hidden; margin-bottom: 20px;">
-      <img src="https://i.pinimg.com/736x/9e/b1/dd/9eb1dde2c23060eedfe775e39ad09f92.jpg" alt="ดูอา" style="width: 100%; height: 100%; object-fit: contain;">
+      <div class="basmala" style="font-size:20px; margin-bottom:12px;">يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ</div>
+      <div style="font-size:14px; color:var(--text2);">โอ้บรรดาผู้ศรัทธา จงขอความช่วยเหลือด้วยความอดทนและการละหมาด</div>
     </div>
-    
     <div class="motivate-num" id="countdown-num">60</div>
     <div style="font-size:16px; color:var(--text3);">เตรียมพร้อม...</div>
     <button class="btn btn-primary" onclick="startTimer()" id="skip-countdown">ข้ามและเริ่มเลย →</button>
@@ -1387,21 +1332,20 @@
 /* ========== FIREBASE CONFIG ==========
    ใส่ค่าของคุณเองด้านล่าง หรือกรอกในหน้าตั้งค่า
    ========================================== */
-const firebaseConfig = {
-  apiKey: "AIzaSyBXiCmGUnw-j5C43vYLW9xJKRGVcEUeY-Y",
-  authDomain: "displine.firebaseapp.com",
-  projectId: "displine",
-  storageBucket: "displine.firebasestorage.app",
-  messagingSenderId: "485672187327",
-  appId: "1:485672187327:web:cfaf98723ca44807ae5d0a",
-  measurementId: "G-89L9RZP6RY"
+const FIREBASE_CONFIG = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
 /* ========== SUPABASE CONFIG ==========
    ใส่ค่าของคุณเองด้านล่าง หรือกรอกในหน้าตั้งค่า
    ========================================== */
-const SUPABASE_URL = "https://oemmxhswzlnwpfirokcf.supabase.co";
-const SUPABASE_KEY = "sb_publishable_otolNsuHZsGAnu11daMZ7g_-3HVarmn";
+const SUPABASE_URL = "YOUR_SUPABASE_URL";
+const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
 
 /* ========== DISCORD WEBHOOK ==========
    ใส่ค่าของคุณเองด้านล่าง หรือกรอกในหน้าตั้งค่า
