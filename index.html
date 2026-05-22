@@ -2,1978 +2,1283 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>แบยี ต้องมีวินัย</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
-  /* ============ CSS VARIABLES ============ */
-  :root {
-    --primary: #1a6b4a;
-    --primary-light: #2d9966;
-    --primary-dark: #0f4a33;
-    --gold: #c8962a;
-    --gold-light: #f0c050;
-    --bg: #f8f5ee;
-    --bg2: #efe9dc;
-    --bg3: #e6dfd1;
-    --card: #ffffff;
-    --text: #1a1a1a;
-    --text2: #4a4a4a;
-    --text3: #7a7a7a;
-    --border: rgba(26,107,74,0.18);
-    --border2: rgba(200,150,42,0.3);
-    --danger: #c0392b;
-    --radius: 16px;
-    --radius-sm: 10px;
-    --shadow: 0 4px 24px rgba(26,107,74,0.10);
-    --shadow-gold: 0 4px 20px rgba(200,150,42,0.15);
-    font-family: 'Sarabun', sans-serif;
-  }
+:root{
+  --p:#1a6b4a;--pl:#2d9966;--pd:#0f4a33;
+  --g:#c8962a;--gl:#f0c050;
+  --bg:#f8f5ee;--bg2:#efe9dc;--bg3:#e6dfd1;--card:#fff;
+  --t:#1a1a1a;--t2:#4a4a4a;--t3:#7a7a7a;
+  --b:rgba(26,107,74,.18);--b2:rgba(200,150,42,.3);
+  --danger:#c0392b;--r:16px;--rs:10px;
+  --sh:0 2px 12px rgba(26,107,74,.08);--shg:0 4px 20px rgba(200,150,42,.15);
+}
+[data-theme=dark]{
+  --p:#2d9966;--pl:#3dba7e;--pd:#1a6b4a;
+  --g:#e0a83a;--gl:#f5cc60;
+  --bg:#0e1a14;--bg2:#152010;--bg3:#1c2b1a;--card:#1a2e1e;
+  --t:#f0ece2;--t2:#b8c8b0;--t3:#7a9a72;
+  --b:rgba(45,153,102,.22);--b2:rgba(224,168,58,.25);
+  --sh:0 2px 12px rgba(0,0,0,.3);--shg:0 4px 20px rgba(200,150,42,.1);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t);font-family:'Sarabun',sans-serif;}
 
-  [data-theme="dark"] {
-    --primary: #2d9966;
-    --primary-light: #3dba7e;
-    --primary-dark: #1a6b4a;
-    --gold: #e0a83a;
-    --gold-light: #f5cc60;
-    --bg: #0e1a14;
-    --bg2: #152010;
-    --bg3: #1c2b1a;
-    --card: #1a2e1e;
-    --text: #f0ece2;
-    --text2: #b8c8b0;
-    --text3: #7a9a72;
-    --border: rgba(45,153,102,0.22);
-    --border2: rgba(224,168,58,0.25);
-    --shadow: 0 4px 24px rgba(0,0,0,0.4);
-    --shadow-gold: 0 4px 20px rgba(200,150,42,0.10);
-  }
+/* === GEO BG === */
+.geo{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.04;
+  background-image:repeating-linear-gradient(60deg,var(--p) 0,var(--p) 1px,transparent 0,transparent 50%),
+  repeating-linear-gradient(120deg,var(--g) 0,var(--g) 1px,transparent 0,transparent 50%);
+  background-size:40px 40px;}
 
-  * { margin:0; padding:0; box-sizing:border-box; }
+/* === PAGE SYSTEM === */
+/* All pages sit in a full-screen container */
+#app{position:fixed;inset:0;z-index:1;}
+.page{position:absolute;inset:0;display:flex;flex-direction:column;visibility:hidden;pointer-events:none;transition:opacity .25s ease,transform .25s ease;opacity:0;transform:translateY(6px);}
+.page.active{visibility:visible;pointer-events:all;opacity:1;transform:none;}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    font-family: 'Sarabun', sans-serif;
-    transition: background 0.3s, color 0.3s;
-  }
+/* Pages with bottom nav: topbar + scroll + nav */
+.page-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+.page-body::-webkit-scrollbar{width:3px}
+.page-body::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
 
-  /* ============ GEOMETRIC PATTERN ============ */
-  .geo-bg {
-    position: fixed; inset: 0; pointer-events: none; z-index: 0;
-    opacity: 0.045;
-    background-image: 
-      repeating-linear-gradient(60deg, var(--primary) 0, var(--primary) 1px, transparent 0, transparent 50%),
-      repeating-linear-gradient(120deg, var(--gold) 0, var(--gold) 1px, transparent 0, transparent 50%);
-    background-size: 40px 40px;
-  }
+/* === TOPBAR === */
+.topbar{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:var(--card);border-bottom:1px solid var(--b);z-index:10;box-shadow:var(--sh);}
+.logo-row{display:flex;align-items:center;gap:6px;font-family:'Amiri',serif;font-size:17px;color:var(--p);font-weight:700;}
+.logo-row img{width:28px;height:28px;border-radius:7px;object-fit:cover;}
+.logo-star{color:var(--g);font-size:12px;}
 
-  [data-theme="dark"] .geo-bg { opacity: 0.06; }
+/* === BOTTOM NAV === */
+.bnav{flex-shrink:0;display:flex;background:var(--card);border-top:1px solid var(--b);box-shadow:0 -2px 12px rgba(0,0,0,.06);}
+.bnav-btn{flex:1;padding:9px 2px 7px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-family:'Sarabun',sans-serif;font-size:10px;color:var(--t3);transition:color .15s;}
+.bnav-btn .ni{font-size:20px;}
+.bnav-btn.on{color:var(--p);}
 
-  /* ============ PAGES ============ */
-  .page { 
-    display: none; min-height: 100vh; 
-    position: relative; z-index: 1;
-    animation: fadeIn 0.35s ease;
-  }
-  .page.active { display: flex; flex-direction: column; }
+/* === CARDS === */
+.card{background:var(--card);border:1px solid var(--b);border-radius:var(--r);box-shadow:var(--sh);padding:16px;}
+.card-g{border-color:var(--b2);box-shadow:var(--shg);}
 
-  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+/* === BUTTONS === */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 22px;border-radius:50px;border:none;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .18s;-webkit-user-select:none;user-select:none;}
+.btn:active{transform:scale(.97);}
+.bp{background:linear-gradient(135deg,var(--p),var(--pl));color:#fff;}
+.bp:active{box-shadow:0 0 0 3px rgba(26,107,74,.25);}
+.bo{background:transparent;border:1.5px solid var(--p);color:var(--p);}
+.bo:hover{background:var(--p);color:#fff;}
+.bg2{background:linear-gradient(135deg,var(--g),var(--gl));color:#fff;}
+.bd{background:var(--danger);color:#fff;}
+.bs{padding:7px 16px;font-size:12px;}
+.bf{width:100%;}
+.bi{width:40px;height:40px;padding:0;border-radius:50%;}
 
-  /* ============ ARABIC BORDER ORNAMENT ============ */
-  .ornament {
-    text-align: center; color: var(--gold); font-family: 'Amiri', serif;
-    font-size: 22px; letter-spacing: 4px; margin: 8px 0;
-    opacity: 0.7;
-  }
+/* === INPUTS === */
+.ig{margin-bottom:14px;}
+.ig label{display:block;font-size:12px;font-weight:600;color:var(--t2);margin-bottom:5px;}
+.ig input,.ig select,.ig textarea{width:100%;padding:10px 14px;background:var(--bg2);border:1.5px solid var(--b);border-radius:var(--rs);color:var(--t);font-family:'Sarabun',sans-serif;font-size:13px;outline:none;transition:border .15s;}
+.ig input:focus,.ig select:focus,.ig textarea:focus{border-color:var(--p);}
+.ig .ew{position:relative;}
+.ig .eb{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--t3);font-size:16px;}
 
-  .basmala {
-    font-family: 'Amiri', serif;
-    color: var(--gold);
-    font-size: 18px;
-    text-align: center;
-    direction: rtl;
-    margin: 6px 0;
-    opacity: 0.85;
-  }
+/* === ORNAMENTS === */
+.orn{text-align:center;color:var(--g);font-family:'Amiri',serif;font-size:20px;letter-spacing:3px;opacity:.7;}
+.bas{font-family:'Amiri',serif;color:var(--g);text-align:center;direction:rtl;opacity:.85;}
 
-  /* ============ CARD ============ */
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 28px;
-  }
+/* === WELCOME PAGE === */
+#pw{background:var(--bg);overflow-y:auto;align-items:center;justify-content:flex-start;padding:20px 16px 32px;gap:14px;text-align:center;}
+.logo-frame{width:110px;height:110px;border:3px solid var(--g);border-radius:14px;padding:3px;background:var(--pd);box-shadow:0 6px 24px rgba(15,74,51,.3);}
+.logo-frame img{width:100%;height:100%;object-fit:cover;border-radius:10px;border:1px solid rgba(200,150,42,.5);}
+.wtitle{font-family:'Amiri',serif;font-size:28px;color:var(--p);font-weight:700;}
+.gframe{width:100%;max-width:340px;border:1px solid var(--b2);border-radius:var(--r);padding:14px;position:relative;background:var(--card);}
+.gframe::before,.gframe::after{content:'✦';position:absolute;top:-9px;background:var(--bg);padding:0 5px;color:var(--g);font-size:12px;}
+.gframe::before{left:16px;}.gframe::after{right:16px;}
 
-  .card-gold {
-    border-color: var(--border2);
-    box-shadow: var(--shadow-gold);
-  }
+/* === ICON STAGE === */
+.icon-stage{display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 0;}
+.icon-wrap{width:160px;height:160px;position:relative;display:flex;align-items:center;justify-content:center;}
+.icon-svg{width:140px;height:140px;}
+.icon-ring{position:absolute;inset:0;border-radius:50%;border:2px solid var(--b2);animation:spin 20s linear infinite;opacity:.4;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.status-pill{font-size:12px;font-weight:600;text-align:center;padding:8px 16px;border-radius:50px;border:1px solid var(--b2);background:var(--bg2);max-width:260px;white-space:pre-line;line-height:1.5;}
 
-  /* ============ BUTTONS ============ */
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 13px 28px; border-radius: 50px; border: none;
-    font-family: 'Sarabun', sans-serif; font-size: 15px; font-weight: 600;
-    cursor: pointer; transition: all 0.2s;
-  }
+/* === CALENDAR === */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:8px;}
+.ch{text-align:center;font-size:11px;color:var(--t3);padding:4px 0;}
+.cd{aspect-ratio:1;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;border:1px solid transparent;position:relative;transition:all .12s;}
+.cd:active{transform:scale(.92);}
+.cd.today{background:rgba(26,107,74,.12);border-color:var(--p);font-weight:700;color:var(--p);}
+.cd.hasp{background:rgba(200,150,42,.1);}
+.cd.done{background:rgba(26,107,74,.22);}
+.cd.fail{background:rgba(192,57,43,.1);}
+.dot{width:4px;height:4px;border-radius:50%;position:absolute;bottom:3px;}
+.dot.g{background:var(--p);}
 
-  .btn-primary {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    color: #fff;
-  }
-  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(26,107,74,0.35); }
-  .btn-primary:active { transform: translateY(0); }
+/* === PLAN ROWS === */
+.prow{background:var(--bg2);border:1px solid var(--b);border-radius:var(--rs);padding:11px 13px;margin-bottom:8px;}
+.aitem{display:flex;align-items:center;gap:8px;padding:9px 11px;background:var(--bg3);border-radius:10px;margin-bottom:6px;border:1px solid transparent;transition:border .15s;}
+.aitem.cur{border-color:var(--p);background:rgba(26,107,74,.06);}
+.aitem.done2{opacity:.45;}
 
-  .btn-outline {
-    background: transparent;
-    border: 1.5px solid var(--primary);
-    color: var(--primary);
-  }
-  .btn-outline:hover { background: var(--primary); color: #fff; }
+/* === TIMER === */
+.chk-prompt{background:linear-gradient(135deg,var(--g),var(--gl));border-radius:var(--r);padding:18px;text-align:center;animation:pop .4s ease;}
+@keyframes pop{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
 
-  .btn-gold {
-    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
-    color: #fff;
-  }
-  .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(200,150,42,0.4); }
+/* === MISC === */
+.st{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:9px;}
+.tag{display:inline-block;padding:2px 9px;border-radius:50px;font-size:11px;font-weight:600;}
+.tg{background:rgba(26,107,74,.12);color:var(--p);}
+.tgo{background:rgba(200,150,42,.15);color:var(--g);}
+.tr{background:rgba(192,57,43,.1);color:var(--danger);}
+.divider{height:1px;background:var(--b);margin:12px 0;}
+.row{display:flex;align-items:center;gap:8px;}
+.rb{display:flex;align-items:center;justify-content:space-between;}
 
-  .btn-danger {
-    background: var(--danger); color: #fff;
-  }
+/* === ACTION CARDS === */
+.ac{background:var(--card);border:1px solid var(--b);border-radius:var(--r);box-shadow:var(--sh);padding:16px 10px;cursor:pointer;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:'Sarabun',sans-serif;text-align:center;border:none;}
+.ac:active{transform:scale(.96);}
+.ac-icon{font-size:26px;}
+.ac-title{font-size:13px;font-weight:700;color:var(--t);}
+.ac-sub{font-size:10px;color:var(--t3);font-family:'Amiri',serif;}
 
-  .btn-sm { padding: 8px 18px; font-size: 13px; }
-  .btn-full { width: 100%; }
-  .btn-icon { width: 44px; height: 44px; padding: 0; border-radius: 50%; }
+/* === TOGGLE === */
+.tog{width:44px;height:24px;background:var(--bg3);border-radius:50px;position:relative;cursor:pointer;transition:background .2s;border:none;flex-shrink:0;}
+.tog.on{background:var(--p);}
+.tog::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.2);}
+.tog.on::after{left:23px;}
 
-  /* ============ INPUTS ============ */
-  .input-group { margin-bottom: 18px; }
-  .input-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
-  .input-group input, .input-group select, .input-group textarea {
-    width: 100%; padding: 12px 16px;
-    background: var(--bg2); border: 1.5px solid var(--border);
-    border-radius: var(--radius-sm); color: var(--text);
-    font-family: 'Sarabun', sans-serif; font-size: 14px;
-    transition: border 0.2s, box-shadow 0.2s; outline: none;
-  }
-  .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
-    border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26,107,74,0.12);
-  }
-  .input-group .eye-wrap { position: relative; }
-  .input-group .eye-wrap .eye-btn {
-    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-    background: none; border: none; cursor: pointer; color: var(--text3); font-size: 18px;
-  }
+/* === ICON CHOICE === */
+.icg{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:9px 0;}
+.ic{aspect-ratio:1;border-radius:var(--rs);border:2px solid var(--b);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:all .15s;background:var(--bg2);font-size:10px;color:var(--t2);font-weight:600;padding:6px;}
+.ic:active{transform:scale(.94);}
+.ic.sel{border-color:var(--g);background:rgba(200,150,42,.08);}
+.ic svg{width:34px;height:34px;}
 
-  /* ============ NAV BAR ============ */
-  .topbar {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 20px; background: var(--card);
-    border-bottom: 1px solid var(--border);
-    position: sticky; top: 0; z-index: 100;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  }
+/* === MOTIVATE === */
+.mot{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:18px;text-align:center;overflow-y:auto;}
+.mot-num{font-size:88px;font-weight:700;color:var(--p);font-family:'Amiri',serif;line-height:1;}
 
-  .logo-text {
-    font-family: 'Amiri', serif; font-size: 22px;
-    color: var(--primary); font-weight: 700;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .logo-text .star { color: var(--gold); font-size: 14px; }
+/* === MODAL === */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:16px;}
+.mo.show{display:flex;}
+.mbox{background:var(--card);border-radius:var(--r);border:1px solid var(--b2);padding:22px 18px;width:100%;max-width:390px;max-height:88vh;overflow-y:auto;animation:fadeUp .22s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.mt{font-size:17px;font-weight:700;margin-bottom:12px;color:var(--p);}
 
-  /* ============ BOTTOM NAV ============ */
-  .bottom-nav {
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
-    background: var(--card); border-top: 1px solid var(--border);
-    display: flex; box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
-  }
-  .bottom-nav .nav-btn {
-    flex: 1; padding: 12px 4px 10px; background: none; border: none; cursor: pointer;
-    display: flex; flex-direction: column; align-items: center; gap: 3px;
-    font-family: 'Sarabun', sans-serif; font-size: 11px; color: var(--text3);
-    transition: color 0.2s;
-  }
-  .bottom-nav .nav-btn .nav-icon { font-size: 22px; }
-  .bottom-nav .nav-btn.active { color: var(--primary); }
-  .bottom-nav .nav-btn.start-btn {
-    color: #fff;
-  }
-  .bottom-nav .start-wrap {
-    flex: 1; display: flex; align-items: center; justify-content: center; padding: 8px 4px;
-  }
-  .bottom-nav .start-pill {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    border: none; border-radius: 50px; cursor: pointer;
-    padding: 10px 22px; color: #fff; font-family: 'Sarabun', sans-serif;
-    font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px;
-    box-shadow: 0 4px 16px rgba(26,107,74,0.4);
-    transition: all 0.2s;
-  }
-  .bottom-nav .start-pill:hover { transform: translateY(-2px); }
+/* === TOAST === */
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--p);color:#fff;padding:9px 20px;border-radius:50px;font-size:13px;font-weight:600;z-index:300;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap;max-width:90vw;text-align:center;}
+#toast.show{opacity:1;}
 
-  /* ============ ICON DISPLAY ============ */
-  .icon-stage {
-    display: flex; flex-direction: column; align-items: center; gap: 12px;
-    padding: 24px 0;
-  }
+/* === NOTIF BADGE === */
+.notif-badge{position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:var(--danger);border-radius:50%;display:none;}
 
-  .icon-canvas {
-    width: 180px; height: 180px; position: relative;
-    display: flex; align-items: center; justify-content: center;
-  }
-
-  .icon-svg { width: 160px; height: 160px; transition: all 0.6s ease; }
-
-  .icon-ring {
-    position: absolute; inset: 0; border-radius: 50%;
-    border: 2px solid var(--border2);
-    animation: spinRing 20s linear infinite;
-    opacity: 0.4;
-  }
-
-  @keyframes spinRing { to { transform: rotate(360deg); } }
-
-  .progress-ring-outer {
-    position: absolute; inset: -10px;
-  }
-
-  .status-msg {
-    font-size: 14px; font-weight: 600; text-align: center;
-    padding: 10px 20px; border-radius: 50px;
-    border: 1px solid var(--border2);
-    background: var(--bg2);
-    max-width: 280px;
-  }
-
-  /* ============ CALENDAR ============ */
-  .cal-grid {
-    display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
-    margin-top: 12px;
-  }
-  .cal-grid .cal-head { text-align: center; font-size: 12px; color: var(--text3); padding: 6px 0; }
-  .cal-grid .cal-day {
-    aspect-ratio: 1; border-radius: 8px; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; font-size: 12px; cursor: pointer;
-    border: 1px solid transparent; transition: all 0.15s; position: relative;
-  }
-  .cal-day:hover { border-color: var(--primary); }
-  .cal-day.today { background: rgba(26,107,74,0.12); border-color: var(--primary); font-weight: 700; color: var(--primary); }
-  .cal-day.has-plan { background: rgba(200,150,42,0.1); }
-  .cal-day.done { background: rgba(26,107,74,0.2); }
-  .cal-day.fail { background: rgba(192,57,43,0.1); }
-  .cal-day .dot { width: 5px; height: 5px; border-radius: 50%; position: absolute; bottom: 3px; }
-  .cal-day .dot.green { background: var(--primary); }
-  .cal-day .dot.red { background: var(--danger); }
-  .cal-day .dot.gold { background: var(--gold); }
-
-  /* ============ PLAN FORM ============ */
-  .plan-row {
-    background: var(--bg2); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 10px;
-  }
-
-  /* ============ TIMER ============ */
-  .timer-circle {
-    width: 180px; height: 180px; border-radius: 50%;
-    background: conic-gradient(var(--primary) var(--pct, 0%), var(--bg3) 0%);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 42px; font-weight: 700; color: var(--primary);
-    margin: 0 auto;
-    position: relative;
-    transition: --pct 0.3s;
-  }
-  .timer-inner {
-    width: 150px; height: 150px; border-radius: 50%;
-    background: var(--card);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 4px;
-  }
-
-  .check-prompt {
-    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
-    border-radius: var(--radius); padding: 20px; text-align: center;
-    animation: pulse 0.5s ease;
-  }
-  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.03)} }
-
-  /* ============ MISC ============ */
-  .section-title {
-    font-size: 13px; font-weight: 700; color: var(--text3);
-    text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px;
-  }
-
-  .tag {
-    display: inline-block; padding: 3px 10px; border-radius: 50px; font-size: 12px;
-    font-weight: 600;
-  }
-  .tag-green { background: rgba(26,107,74,0.12); color: var(--primary); }
-  .tag-gold { background: rgba(200,150,42,0.15); color: var(--gold); }
-  .tag-red { background: rgba(192,57,43,0.1); color: var(--danger); }
-
-  .divider {
-    height: 1px; background: var(--border); margin: 16px 0;
-  }
-
-  .scroll-area { overflow-y: auto; flex: 1; }
-
-  .pb-nav { padding-bottom: 80px; }
-
-  .row { display: flex; align-items: center; gap: 10px; }
-  .row-between { display: flex; align-items: center; justify-content: space-between; }
-
-  /* ============ WELCOME SCREEN ============ */
-  #page-welcome {
-    background: var(--bg);
-    align-items: center; justify-content: center;
-    padding: 24px;
-    text-align: center;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .welcome-logo {
-    width: 90px; height: 90px; border-radius: 28px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: var(--shadow-gold);
-    margin: 0 auto;
-  }
-
-  .welcome-logo svg { width: 52px; height: 52px; }
-
-  .bismillah-large {
-    font-family: 'Amiri', serif;
-    font-size: 28px; color: var(--gold); direction: rtl;
-    line-height: 1.4;
-  }
-
-  .welcome-title {
-    font-family: 'Amiri', serif; font-size: 36px;
-    color: var(--primary); font-weight: 700;
-  }
-
-  .welcome-quote {
-    background: var(--card); border: 1px solid var(--border2);
-    border-radius: var(--radius); padding: 20px 24px;
-    max-width: 380px; margin: 0 auto;
-    box-shadow: var(--shadow-gold);
-  }
-
-  .welcome-quote .arabic {
-    font-family: 'Amiri', serif; font-size: 20px; direction: rtl;
-    color: var(--gold); margin-bottom: 8px; line-height: 1.8;
-  }
-
-  .welcome-quote .quote-text {
-    font-size: 16px; color: var(--text2); line-height: 1.7;
-  }
-
-  .welcome-sub {
-    font-size: 15px; color: var(--text2); max-width: 320px;
-    line-height: 1.7;
-  }
-
-  .geometric-frame {
-    width: 100%; max-width: 360px; margin: 0 auto;
-    border: 1px solid var(--border2); border-radius: var(--radius);
-    padding: 16px; position: relative;
-  }
-
-  .geometric-frame::before, .geometric-frame::after {
-    content: '✦';
-    position: absolute; top: -10px;
-    background: var(--bg); padding: 0 6px;
-    color: var(--gold); font-size: 14px;
-  }
-  .geometric-frame::before { left: 20px; }
-  .geometric-frame::after { right: 20px; }
-
-  /* ============ SETTINGS PAGE ============ */
-  .settings-group {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: var(--radius); overflow: hidden; margin-bottom: 16px;
-  }
-
-  .settings-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 18px; border-bottom: 1px solid var(--border);
-  }
-  .settings-row:last-child { border-bottom: none; }
-  .settings-row .s-label { font-size: 14px; font-weight: 500; }
-  .settings-row .s-icon { font-size: 20px; color: var(--primary); margin-right: 12px; }
-
-  /* Toggle switch */
-  .toggle {
-    width: 46px; height: 26px; background: var(--bg3); border-radius: 50px;
-    position: relative; cursor: pointer; transition: background 0.25s; border: none;
-  }
-  .toggle.on { background: var(--primary); }
-  .toggle::after {
-    content: ''; position: absolute;
-    width: 20px; height: 20px; border-radius: 50%; background: #fff;
-    top: 3px; left: 3px; transition: left 0.25s;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-  }
-  .toggle.on::after { left: 23px; }
-
-  /* ============ ICON SELECTOR ============ */
-  .icon-choice-grid {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
-    margin: 12px 0;
-  }
-  .icon-choice {
-    aspect-ratio: 1; border-radius: var(--radius-sm); border: 2px solid var(--border);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 6px; cursor: pointer; transition: all 0.2s;
-    background: var(--bg2); font-size: 11px; color: var(--text2); font-weight: 600;
-    padding: 8px;
-  }
-  .icon-choice:hover { border-color: var(--primary); }
-  .icon-choice.selected { border-color: var(--gold); background: rgba(200,150,42,0.08); }
-  .icon-choice svg { width: 40px; height: 40px; }
-
-  /* ============ COUNTDOWN / MOTIVATE ============ */
-  .motivate-screen {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    padding: 32px 24px; gap: 24px; text-align: center;
-  }
-  .motivate-num {
-    font-size: 96px; font-weight: 700; color: var(--primary);
-    font-family: 'Amiri', serif; line-height: 1;
-  }
-
-  /* ============ MODAL ============ */
-  .modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.55);
-    z-index: 200; display: none;
-    align-items: center; justify-content: center; padding: 20px;
-  }
-  .modal-overlay.show { display: flex; }
-  .modal {
-    background: var(--card); border-radius: var(--radius);
-    border: 1px solid var(--border2); padding: 28px 24px;
-    width: 100%; max-width: 400px; max-height: 85vh; overflow-y: auto;
-    animation: fadeIn 0.25s;
-  }
-  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: var(--primary); }
-
-  /* ============ MAIN ACTION CARDS ============ */
-  .main-action-card {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: var(--radius); box-shadow: var(--shadow);
-    padding: 20px 12px; cursor: pointer; transition: all 0.2s;
-    display: flex; flex-direction: column; align-items: center; gap: 6px;
-    font-family: 'Sarabun', sans-serif; text-align: center;
-  }
-  .main-action-card:hover {
-    transform: translateY(-3px); box-shadow: var(--shadow-gold);
-    border-color: var(--border2);
-  }
-  .main-action-card:active { transform: translateY(0); }
-  .main-action-card .mac-icon { font-size: 32px; }
-  .main-action-card .mac-title { font-size: 14px; font-weight: 700; color: var(--text); }
-  .main-action-card .mac-sub { font-size: 11px; color: var(--text3); font-family: 'Amiri', serif; }
-
-  /* ============ RESPONSIVE ============ */
-  @media (min-width: 600px) {
-    .page-inner { max-width: 420px; margin: 0 auto; }
-  }
+@media(min-width:520px){.pi{max-width:420px;margin:0 auto;}}
 </style>
 </head>
 <body>
-<div class="geo-bg"></div>
+<div class="geo"></div>
+<div id="app">
 
-<!-- ==============================
-     PAGE 1: WELCOME
-============================== -->
-<div id="page-welcome" class="page active">
-  <div class="basmala">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
-  <div class="ornament">﴾ ✦ ﴿</div>
-
-  <div class="welcome-logo">
-    <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M26 6 L30 18 L44 18 L33 27 L37 40 L26 32 L15 40 L19 27 L8 18 L22 18 Z" fill="rgba(255,255,255,0.9)"/>
-      <circle cx="26" cy="26" r="3" fill="rgba(255,255,255,0.5)"/>
-    </svg>
+<!-- ===== PAGE: WELCOME ===== -->
+<div id="pw" class="page active">
+  <div class="orn" style="font-size:26px;">❋ ﷽ ❋</div>
+  <div class="bas" style="font-size:20px;">اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِهِ</div>
+  <div style="font-size:12px;color:var(--t3);">โอ้อัลลอฮ์ โปรดประทานพรแก่ท่านนบีมูฮัมหมัดและวงศ์วาน</div>
+  <div class="logo-frame" style="margin:0 auto;">
+    <img src="https://scontent.fhdy4-1.fna.fbcdn.net/v/t39.30808-6/687657078_122093038857312449_1009002414784607154_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=YyelyZhh4-IQ7kNvwFK6vu4&_nc_oc=AdrueUT7Xz-KVbsBNr86yJ4E06Xim7yZDJL5gjHWU1lDeNSL-kxPGACk-o-EsMXnUeF6IGfeIkMmVVnqCcaCuaDP&_nc_zt=23&_nc_ht=scontent.fhdy4-1.fna&oh=00_Af7o_5EM7yw-4iz8h_wvQRb8NYT1MvYVlSzOD8UWzWMBEw&oe=6A14FB3C" alt="logo" onerror="this.style.display='none'">
   </div>
-
-  <div class="welcome-title">แบยี ต้องมีวินัย</div>
-  <div class="basmala" style="font-size:14px; opacity:0.7;">إِنَّ اللَّهَ يُحِبُّ الْمُتَوَكِّلِينَ</div>
-
-  <div class="welcome-quote geometric-frame">
-    <div class="arabic">اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ</div>
+  <div class="wtitle">แบยี ต้องมีวินัย</div>
+  <div class="bas" style="font-size:14px;opacity:.7;">إِنَّ اللَّهَ يُحِبُّ الْمُتَوَكِّلِينَ</div>
+  <div class="gframe">
+    <div style="font-family:'Amiri',serif;font-size:17px;direction:rtl;color:var(--g);margin-bottom:6px;line-height:1.8;">اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ</div>
     <div class="divider"></div>
-    <div class="quote-text">
-      🌿 คุณโชคดีมากที่ก้าวมาสู่การสร้างวินัย<br>
-      ทุกก้าวเล็กๆ ของวันนี้ คือรากของต้นไม้แห่งความสำเร็จในวันพรุ่งนี้<br>
-      <span style="color:var(--gold); font-weight:600;">เริ่มต้นด้วยบิสมิลลาห์ แล้วลงมือเดี๋ยวนี้</span>
-    </div>
+    <div style="font-size:13px;color:var(--t2);line-height:1.7;">🌿 คุณโชคดีมากที่มาสร้างวินัย<br>ทุกก้าวเล็กๆ คือรากของต้นไม้แห่งความสำเร็จ<br><span style="color:var(--g);font-weight:600;">เริ่มด้วยบิสมิลลาห์ แล้วลงมือเดี๋ยวนี้</span></div>
   </div>
-
-  <div style="display:flex; gap:14px; width:100%; max-width:320px;">
-    <button class="btn btn-outline btn-full" onclick="showPage('page-login')">
-      🔐 เข้าสู่ระบบ
-    </button>
-    <button class="btn btn-primary btn-full" onclick="showPage('page-register')">
-      ✨ ลงทะเบียน
-    </button>
+  <div style="display:flex;gap:10px;width:100%;max-width:300px;">
+    <button class="btn bo bf" onclick="go('pl')">🔐 เข้าสู่ระบบ</button>
+    <button class="btn bp bf" onclick="go('pr')">✨ ลงทะเบียน</button>
   </div>
-
-  <div class="ornament" style="font-size:14px;">❋ ﷽ ❋</div>
+  <div class="orn" style="font-size:13px;">❋ ﷽ ❋</div>
 </div>
 
-
-<!-- ==============================
-     PAGE 2: REGISTER
-============================== -->
-<div id="page-register" class="page" style="background:var(--bg);">
-  <div style="min-height:100vh; padding:32px 24px; overflow-y:auto;">
-    <div class="page-inner">
-      <div class="basmala" style="margin-bottom:8px;">بِسْمِ اللَّهِ</div>
-      <div class="ornament" style="font-size:16px; margin-bottom:20px;">✦ ——— ✦</div>
-      <h1 style="font-size:26px; font-weight:700; color:var(--primary); margin-bottom:4px; font-family:'Amiri',serif;">สร้างบัญชีใหม่</h1>
-      <p style="font-size:14px; color:var(--text3); margin-bottom:28px;">بِدَايَةُ رَحْلَةٍ جَدِيدَةٍ — เริ่มต้นการเดินทางใหม่</p>
-
-      <div class="input-group">
-        <label>👤 ชื่อผู้ใช้ (Username)</label>
-        <input type="text" id="reg-user" placeholder="ใส่ชื่อผู้ใช้">
-      </div>
-      <div class="input-group">
-        <label>🔒 รหัสผ่าน</label>
-        <div class="eye-wrap">
-          <input type="password" id="reg-pass" placeholder="อย่างน้อย 6 ตัวอักษร">
-          <button class="eye-btn" onclick="toggleEye('reg-pass', this)">👁</button>
-        </div>
-      </div>
-      <div class="input-group">
-        <label>📛 ชื่อจริง</label>
-        <input type="text" id="reg-fname" placeholder="ชื่อจริงของคุณ">
-      </div>
-      <div class="input-group">
-        <label>📛 นามสกุล</label>
-        <input type="text" id="reg-lname" placeholder="นามสกุลของคุณ">
-      </div>
-      <div class="input-group">
-        <label>🏫 ชั้น / ระดับการศึกษา</label>
-        <input type="text" id="reg-class" placeholder="เช่น ม.6 / ป.ตรี ปี 2">
-      </div>
-      <div class="input-group">
-        <label>🌟 อนาคตที่ฝันไว้ / เป้าหมายชีวิต</label>
-        <input type="text" id="reg-future" placeholder="เช่น วิศวกร / หมอ / นักธุรกิจ">
-      </div>
-
+<!-- ===== PAGE: REGISTER ===== -->
+<div id="pr" class="page">
+  <div class="page-body" style="padding:24px 16px 40px;">
+    <div class="pi">
+      <div class="bas" style="margin-bottom:5px;font-size:16px;">بِسْمِ اللَّهِ</div>
+      <div class="orn" style="font-size:14px;margin-bottom:14px;">✦ ——— ✦</div>
+      <h1 style="font-size:22px;font-weight:700;color:var(--p);margin-bottom:3px;font-family:'Amiri',serif;">สร้างบัญชีใหม่</h1>
+      <p style="font-size:12px;color:var(--t3);margin-bottom:20px;">بِدَايَةُ رَحْلَةٍ جَدِيدَةٍ — เริ่มต้นการเดินทางใหม่</p>
+      <div class="ig"><label>👤 ชื่อผู้ใช้</label><input type="text" id="ru" placeholder="Username"></div>
+      <div class="ig"><label>🔒 รหัสผ่าน (อย่างน้อย 6 ตัว)</label><div class="ew"><input type="password" id="rp" placeholder="Password"><button class="eb" onclick="eye('rp',this)">👁</button></div></div>
+      <div class="ig"><label>📛 ชื่อจริง</label><input type="text" id="rfn" placeholder="ชื่อ"></div>
+      <div class="ig"><label>📛 นามสกุล</label><input type="text" id="rln" placeholder="นามสกุล"></div>
+      <div class="ig"><label>🏫 ชั้น / ระดับ</label><input type="text" id="rcl" placeholder="เช่น ม.6"></div>
+      <div class="ig"><label>🌟 อนาคต / เป้าหมายชีวิต</label><input type="text" id="rfu" placeholder="เช่น วิศวกร"></div>
       <div class="divider"></div>
-      <button class="btn btn-primary btn-full" onclick="doRegister()" style="padding:15px;">
-        ✨ สร้างบัญชี — بِسْمِ اللَّهِ
-      </button>
-      <div style="text-align:center; margin-top:16px;">
-        <span style="font-size:14px; color:var(--text3);">มีบัญชีแล้ว? </span>
-        <button class="btn btn-sm btn-outline" onclick="showPage('page-login')">เข้าสู่ระบบ</button>
-      </div>
+      <button class="btn bp bf" onclick="doReg()" style="padding:13px;">✨ สร้างบัญชี</button>
+      <div style="text-align:center;margin-top:12px;"><span style="font-size:12px;color:var(--t3);">มีบัญชีแล้ว? </span><button class="btn bo bs" onclick="go('pl')">เข้าสู่ระบบ</button></div>
     </div>
   </div>
 </div>
 
-
-<!-- ==============================
-     PAGE 3: LOGIN
-============================== -->
-<div id="page-login" class="page" style="background:var(--bg);">
-  <div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:32px 24px;">
-    <div class="page-inner" style="width:100%;">
-      <div style="text-align:center; margin-bottom:28px;">
-        <div class="bismillah-large">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
-        <div class="ornament">✦ ——— ✦</div>
-        <h1 style="font-size:28px; font-weight:700; color:var(--primary); font-family:'Amiri',serif; margin-top:8px;">ยินดีต้อนรับกลับ</h1>
-        <p style="font-size:14px; color:var(--text3);">مَرْحَبًا بِكَ مُجَدَّدًا</p>
+<!-- ===== PAGE: LOGIN ===== -->
+<div id="pl" class="page">
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:24px 16px;overflow-y:auto;">
+    <div class="pi" style="width:100%;">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div class="bas" style="font-size:22px;">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+        <div class="orn" style="margin:6px 0;">✦ ——— ✦</div>
+        <h1 style="font-size:22px;font-weight:700;color:var(--p);font-family:'Amiri',serif;">ยินดีต้อนรับกลับ</h1>
+        <p style="font-size:12px;color:var(--t3);">مَرْحَبًا بِكَ مُجَدَّدًا</p>
       </div>
-
-      <div class="card card-gold">
-        <div class="input-group">
-          <label>👤 ชื่อผู้ใช้</label>
-          <input type="text" id="login-user" placeholder="Username">
-        </div>
-        <div class="input-group">
-          <label>🔒 รหัสผ่าน</label>
-          <div class="eye-wrap">
-            <input type="password" id="login-pass" placeholder="Password">
-            <button class="eye-btn" onclick="toggleEye('login-pass', this)">👁</button>
-          </div>
-        </div>
-        <button class="btn btn-primary btn-full" onclick="doLogin()" style="padding:15px; margin-top:8px;">
-          🚀 เข้าสู่ระบบ
-        </button>
+      <div class="card card-g">
+        <div class="ig"><label>👤 ชื่อผู้ใช้</label><input type="text" id="lu" placeholder="Username"></div>
+        <div class="ig"><label>🔒 รหัสผ่าน</label><div class="ew"><input type="password" id="lp" placeholder="Password"><button class="eb" onclick="eye('lp',this)">👁</button></div></div>
+        <button class="btn bp bf" onclick="doLogin()" style="padding:13px;margin-top:4px;">🚀 เข้าสู่ระบบ</button>
       </div>
-
-      <div style="text-align:center; margin-top:20px;">
-        <span style="font-size:14px; color:var(--text3);">ยังไม่มีบัญชี? </span>
-        <button class="btn btn-sm btn-outline" onclick="showPage('page-register')">ลงทะเบียน</button>
-      </div>
-      <div style="text-align:center; margin-top:12px;">
-        <button class="btn btn-sm" style="color:var(--text3); background:none; border:none;" onclick="showPage('page-welcome')">← กลับหน้าหลัก</button>
-      </div>
+      <div style="text-align:center;margin-top:14px;"><span style="font-size:12px;color:var(--t3);">ยังไม่มีบัญชี? </span><button class="btn bo bs" onclick="go('pr')">ลงทะเบียน</button></div>
+      <div style="text-align:center;margin-top:10px;"><button class="btn bs" style="color:var(--t3);background:none;border:none;" onclick="go('pw')">← กลับ</button></div>
     </div>
   </div>
 </div>
 
-
-<!-- ==============================
-     PAGE 4: MAIN HOME
-============================== -->
-<div id="page-main" class="page" style="background:var(--bg); flex-direction:column;">
-  <!-- Topbar -->
+<!-- ===== PAGE: MAIN ===== -->
+<div id="pm" class="page">
   <div class="topbar">
-    <div class="logo-text">
-      <img id="logo-img" src="LOGO_URL_HERE" alt="logo" style="width:32px; height:32px; border-radius:8px; display:none;" onerror="this.style.display='none'">
-      <span>✦</span>
-      <span style="font-size:16px;">แบยี</span>
-      <span class="star">★</span>
+    <div class="logo-row">
+      <img src="https://scontent.fhdy4-1.fna.fbcdn.net/v/t39.30808-6/696187910_122100299517312449_1965577196789858038_n.jpg?stp=dst-jpg_s720x720_tt6&_nc_cat=110&ccb=1-7&_nc_sid=127cfc&_nc_ohc=c-6fvCemw7EQ7kNvwE0oK-P&_nc_oc=Adqv9SG_StmrKtjqeFN7Fh4voygH_bKXaLsOnZvZ9jsSJaOd7lm3sT9jR5JnJSWeXN0&_nc_zt=23&_nc_ht=scontent.fhdy4-1.fna&oh=00_Af5lvpdV7XQPivfj_L6UBOVH_WYQAl4zsMsOVPN8fJh0Rg&oe=6A14F764" alt="" onerror="this.style.display='none'">
+      <span>✦</span><span>แบยี ต้องมีวินัย</span><span class="logo-star">★</span>
     </div>
-    <div style="display:flex; align-items:center; gap:10px;">
-      <span id="main-username" style="font-size:13px; color:var(--text3);">سبحان الله</span>
-      <button class="btn btn-icon btn-outline" onclick="showPage('page-settings')" title="ตั้งค่า" style="font-size:20px;">⚙</button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span id="muser" style="font-size:11px;color:var(--t3);max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+      <button class="btn bi bo" onclick="go('ps')" style="font-size:17px;position:relative;">⚙<span class="notif-badge" id="notif-badge"></span></button>
     </div>
   </div>
-
-  <!-- Content -->
-  <div class="scroll-area pb-nav" style="padding:20px 16px;">
-    <!-- Icon Stage -->
-    <div class="card card-gold" style="margin-bottom:16px;">
-      <div class="basmala" style="font-size:13px; margin-bottom:8px;">الصَّبْرُ مِفْتَاحُ الْفَرَجِ</div>
+  <div class="page-body" style="padding:12px 12px 0;">
+    <div class="card card-g" style="margin-bottom:10px;">
+      <div class="bas" style="font-size:11px;margin-bottom:5px;">الصَّبْرُ مِفْتَاحُ الْفَرَجِ</div>
       <div class="icon-stage">
-        <div class="icon-canvas">
+        <div class="icon-wrap">
           <div class="icon-ring"></div>
-          <!-- Progress Arc SVG -->
-          <svg class="progress-ring-outer" viewBox="0 0 200 200" style="position:absolute;inset:-10px;width:200px;height:200px;">
-            <circle cx="100" cy="100" r="90" fill="none" stroke="var(--border2)" stroke-width="3"/>
-            <circle id="progress-arc" cx="100" cy="100" r="90" fill="none" stroke="var(--gold)" stroke-width="3"
-              stroke-dasharray="565" stroke-dashoffset="565" stroke-linecap="round"
-              transform="rotate(-90 100 100)" style="transition:stroke-dashoffset 1s ease;"/>
+          <svg viewBox="0 0 200 200" style="position:absolute;inset:-10px;width:200px;height:200px;pointer-events:none;">
+            <circle cx="100" cy="100" r="90" fill="none" stroke="var(--b2)" stroke-width="2.5"/>
+            <circle id="arc" cx="100" cy="100" r="90" fill="none" stroke="var(--g)" stroke-width="2.5" stroke-dasharray="565" stroke-dashoffset="565" stroke-linecap="round" transform="rotate(-90 100 100)" style="transition:stroke-dashoffset 1s ease;"/>
           </svg>
-          <div id="main-icon-display" class="icon-svg">
-            <!-- Tree SVG (default) -->
-            <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
-              <rect x="70" y="110" width="20" height="40" fill="#8B6914" rx="4"/>
-              <ellipse cx="80" cy="80" rx="50" ry="55" fill="#2d9966"/>
-              <ellipse cx="80" cy="60" rx="38" ry="42" fill="#3dba7e"/>
-              <ellipse cx="80" cy="44" rx="26" ry="30" fill="#4dd496"/>
-              <circle cx="65" cy="72" r="6" fill="#27864e" opacity="0.6"/>
-              <circle cx="95" cy="68" r="5" fill="#27864e" opacity="0.6"/>
-              <circle cx="80" cy="95" r="7" fill="#27864e" opacity="0.5"/>
-            </svg>
-          </div>
+          <div id="micon" class="icon-svg"></div>
         </div>
-        <div id="main-status-msg" class="status-msg">
-          🌿 เริ่มต้นวันนี้ด้วยบิสมิลลาห์<br>
-          <span style="font-size:12px; color:var(--text3);">สร้างแผนของคุณก่อนเลย</span>
-        </div>
+        <div id="msmsg" class="status-pill">🌿 เริ่มต้นวันนี้ด้วยบิสมิลลาห์</div>
       </div>
-      <div style="text-align:center;">
-        <div id="streak-display" style="font-size:13px; color:var(--text2);">
-          🔥 ต่อเนื่อง: <b id="streak-num" style="color:var(--primary);">0</b> วัน
-          &nbsp;|&nbsp; 📅 วันนี้: <span id="today-date" style="color:var(--gold);"></span>
-        </div>
+      <div style="text-align:center;font-size:12px;color:var(--t2);">🔥 ต่อเนื่อง: <b id="mstreak" style="color:var(--p);">0</b> วัน &nbsp;|&nbsp; 📅 <span id="mdate" style="color:var(--g);"></span></div>
+    </div>
+    <div class="card" style="margin-bottom:10px;">
+      <div class="st">เป้าหมาย</div>
+      <div id="mgoal" style="font-size:13px;color:var(--t3);">ยังไม่มีเป้าหมาย — กดวางแผน</div>
+      <div id="mbar-wrap" style="display:none;margin-top:9px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t3);margin-bottom:4px;"><span>ความคืบหน้า</span><span id="mpct">0%</span></div>
+        <div style="height:6px;background:var(--bg3);border-radius:50px;overflow:hidden;"><div id="mbar" style="height:100%;background:linear-gradient(90deg,var(--p),var(--pl));border-radius:50px;width:0%;transition:width .8s;"></div></div>
       </div>
     </div>
-
-    <!-- Goal Progress -->
-    <div class="card" style="margin-bottom:16px;" id="goal-card">
-      <div class="section-title">เป้าหมายของฉัน</div>
-      <div id="goal-display" style="font-size:14px; color:var(--text3);">ยังไม่มีเป้าหมาย — กดปุ่ม "วางแผน" เพื่อเริ่มต้น</div>
-      <div style="margin-top:12px;" id="goal-bar-wrap" style="display:none;">
-        <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text3); margin-bottom:6px;">
-          <span>ความคืบหน้า</span>
-          <span id="goal-pct">0%</span>
-        </div>
-        <div style="height:8px; background:var(--bg3); border-radius:50px; overflow:hidden;">
-          <div id="goal-bar" style="height:100%; background:linear-gradient(90deg,var(--primary),var(--primary-light)); border-radius:50px; width:0%; transition:width 0.8s;"></div>
-        </div>
-      </div>
+    <div class="card card-g" style="text-align:center;padding:12px 14px;margin-bottom:10px;">
+      <div class="bas" style="font-size:14px;margin-bottom:3px;">وَفِي ذَٰلِكَ فَلْيَتَنَافَسِ الْمُتَنَافِسُونَ</div>
+      <div style="font-size:10px;color:var(--t3);">และในสิ่งนั้น บรรดาผู้แข่งขันพึงแข่งขัน</div>
     </div>
-
-    <!-- Quick Quote -->
-    <div class="card card-gold" style="text-align:center; padding:16px 20px; margin-bottom:16px;">
-      <div class="basmala" style="font-size:16px; margin-bottom:6px;">وَفِي ذَٰلِكَ فَلْيَتَنَافَسِ الْمُتَنَافِسُونَ</div>
-      <div style="font-size:12px; color:var(--text3);">และในสิ่งนั้น บรรดาผู้แข่งขันพึงแข่งขัน</div>
+    <!-- แสดงแผนวันนี้ -->
+    <div id="today-plan-preview" class="card" style="margin-bottom:10px;display:none;">
+      <div class="st">📅 แผนวันนี้</div>
+      <div id="today-plan-list"></div>
     </div>
-
-    <!-- 4 Action Buttons Grid -->
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
-      <button class="main-action-card" onclick="goMission()">
-        <span class="mac-icon">🚀</span>
-        <span class="mac-title">เริ่มภารกิจ</span>
-        <span class="mac-sub">بِسْمِ اللَّهِ</span>
-      </button>
-      <button class="main-action-card" onclick="showPage('page-plan')">
-        <span class="mac-icon">📋</span>
-        <span class="mac-title">วางแผน</span>
-        <span class="mac-sub">ตั้งเป้าหมาย</span>
-      </button>
-      <button class="main-action-card" onclick="showPage('page-history')">
-        <span class="mac-icon">📅</span>
-        <span class="mac-title">ประวัติ</span>
-        <span class="mac-sub">ดูย้อนหลัง</span>
-      </button>
-      <button class="main-action-card" onclick="showPage('page-icon-settings')">
-        <span class="mac-icon">🎨</span>
-        <span class="mac-title">ตั้งค่า Icon</span>
-        <span class="mac-sub">ข้อความ/แจ้งเตือน</span>
-      </button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;">
+      <button class="ac" onclick="goMission()" style="background:var(--card);border:1px solid var(--b);border-radius:var(--r);box-shadow:var(--sh);"><span class="ac-icon">🚀</span><span class="ac-title">เริ่มภารกิจ</span><span class="ac-sub">بِسْمِ اللَّهِ</span></button>
+      <button class="ac" onclick="go('pp')" style="background:var(--card);border:1px solid var(--b);border-radius:var(--r);box-shadow:var(--sh);"><span class="ac-icon">📋</span><span class="ac-title">วางแผน</span><span class="ac-sub">ตั้งเป้าหมาย</span></button>
+      <button class="ac" onclick="go('ph')" style="background:var(--card);border:1px solid var(--b);border-radius:var(--r);box-shadow:var(--sh);"><span class="ac-icon">📅</span><span class="ac-title">ประวัติ</span><span class="ac-sub">ดูย้อนหลัง</span></button>
+      <button class="ac" onclick="go('pi2')" style="background:var(--card);border:1px solid var(--b);border-radius:var(--r);box-shadow:var(--sh);"><span class="ac-icon">🎨</span><span class="ac-title">ตั้งค่า Icon</span><span class="ac-sub">ข้อความ/แจ้งเตือน</span></button>
     </div>
-
-    <!-- Manual Button -->
-    <button class="btn btn-outline btn-full" onclick="showPage('page-manual')" style="margin-bottom:20px; border-color:var(--gold); color:var(--gold);">
-      📖 คู่มือการใช้งาน — دَلِيلُ الاسْتِخْدَام
-    </button>
+    <button class="btn bo bf" onclick="go('pman')" style="margin-bottom:12px;border-color:var(--g);color:var(--g);font-size:12px;">📖 คู่มือการใช้งาน</button>
   </div>
-
-  <!-- Bottom Nav -->
-  <div class="bottom-nav">
-    <button class="nav-btn active" onclick="showPage('page-main')" id="nav-home">
-      <span class="nav-icon">🏡</span>
-      <span>หน้าหลัก</span>
-    </button>
-    <button class="nav-btn" onclick="goMission()" id="nav-start">
-      <span class="nav-icon">🚀</span>
-      <span>เริ่มภารกิจ</span>
-    </button>
-    <button class="nav-btn" onclick="showPage('page-plan')" id="nav-plan">
-      <span class="nav-icon">📋</span>
-      <span>วางแผน</span>
-    </button>
-    <button class="nav-btn" onclick="showPage('page-history')" id="nav-history">
-      <span class="nav-icon">📅</span>
-      <span>ประวัติ</span>
-    </button>
-    <button class="nav-btn" onclick="showPage('page-icon-settings')" id="nav-icon">
-      <span class="nav-icon">🎨</span>
-      <span>ตั้งค่า</span>
-    </button>
+  <div class="bnav">
+    <button class="bnav-btn on" onclick="go('pm')"><span class="ni">🏡</span><span>หน้าหลัก</span></button>
+    <button class="bnav-btn" onclick="goMission()"><span class="ni">🚀</span><span>ภารกิจ</span></button>
+    <button class="bnav-btn" onclick="go('pp')"><span class="ni">📋</span><span>วางแผน</span></button>
+    <button class="bnav-btn" onclick="go('ph')"><span class="ni">📅</span><span>ประวัติ</span></button>
+    <button class="bnav-btn" onclick="go('pi2')"><span class="ni">🎨</span><span>ตั้งค่า</span></button>
   </div>
 </div>
 
-
-<!-- ==============================
-     PAGE 4.1: MISSION START
-============================== -->
-<div id="page-mission" class="page" style="background:var(--bg); flex-direction:column;">
+<!-- ===== PAGE: MISSION ===== -->
+<div id="pms" class="page">
   <div class="topbar">
-    <button class="btn btn-sm btn-outline" onclick="showPage('page-main')">← กลับ</button>
-    <span style="font-weight:700; color:var(--primary);">🚀 เริ่มภารกิจ</span>
-    <div style="width:60px;"></div>
+    <button class="btn bo bs" onclick="go('pm')">← กลับ</button>
+    <span style="font-weight:700;color:var(--p);font-size:14px;">🚀 เริ่มภารกิจ</span>
+    <div style="width:55px;"></div>
   </div>
-  <div class="scroll-area pb-nav" style="padding:20px 16px;">
-    <div class="basmala" style="margin-bottom:16px;">بِسْمِ اللَّهِ تَوَكَّلْتُ عَلَى اللَّهِ</div>
-
-    <!-- Today's Plan -->
-    <div class="card card-gold" style="margin-bottom:16px;">
-      <div class="section-title">แผนวันนี้</div>
-      <div id="mission-today-plans">
-        <div class="plan-row">
-          <div class="row-between">
-            <span style="font-weight:600;">📖 อ่านหนังสือ</span>
-            <span class="tag tag-gold">09:00 - 11:00</span>
-          </div>
-          <div style="font-size:13px; color:var(--text3); margin-top:6px;">เป้าหมาย: เข้าใจบทที่ 3-5 | 120 นาที</div>
-          <div style="margin-top:10px; display:flex; gap:8px;">
-            <button class="btn btn-sm btn-outline" onclick="editTodayPlan(0)">✏ แก้ไข</button>
-          </div>
-        </div>
+  <div class="page-body" style="padding:12px;">
+    <div class="bas" style="margin-bottom:10px;font-size:15px;">بِسْمِ اللَّهِ تَوَكَّلْتُ عَلَى اللَّهِ</div>
+    <div class="card card-g" style="margin-bottom:10px;">
+      <div class="st">📅 แผนวันนี้</div>
+      <div id="mis-plans"></div>
+      <div id="mis-noPlan" style="display:none;text-align:center;padding:16px;">
+        <div style="font-size:28px;margin-bottom:8px;">📋</div>
+        <div style="font-size:13px;color:var(--t2);margin-bottom:12px;">ยังไม่มีแผน กรุณาวางแผนก่อน</div>
+        <button class="btn bp" onclick="go('pp')">📋 ไปวางแผน</button>
       </div>
-      <button class="btn btn-sm btn-primary" onclick="startCountdown()" style="margin-top:12px; width:100%;">
-        ▶ เริ่มต้นเลย
-      </button>
+      <button id="mis-start-btn" class="btn bp bf" onclick="startCountdown()" style="margin-top:10px;display:none;">▶ เริ่มต้นเลย</button>
     </div>
+  </div>
+  <div class="bnav">
+    <button class="bnav-btn" onclick="go('pm')"><span class="ni">🏡</span><span>หน้าหลัก</span></button>
+    <button class="bnav-btn on" onclick="goMission()"><span class="ni">🚀</span><span>ภารกิจ</span></button>
+    <button class="bnav-btn" onclick="go('pp')"><span class="ni">📋</span><span>วางแผน</span></button>
+    <button class="bnav-btn" onclick="go('ph')"><span class="ni">📅</span><span>ประวัติ</span></button>
+    <button class="bnav-btn" onclick="go('pi2')"><span class="ni">🎨</span><span>ตั้งค่า</span></button>
   </div>
 </div>
 
-
-<!-- PAGE 4.1b: MOTIVATE / COUNTDOWN -->
-<div id="page-countdown" class="page" style="background:var(--bg); flex-direction:column;">
+<!-- ===== PAGE: COUNTDOWN ===== -->
+<div id="pcd" class="page">
   <div class="topbar">
-    <button class="btn btn-sm btn-outline" onclick="showPage('page-mission')">← ยกเลิก</button>
-    <span style="font-weight:700; color:var(--gold);">👀 ดูก่อนเริ่ม</span>
-    <div style="width:60px;"></div>
+    <button class="btn bo bs" onclick="cancelCD()">← ยกเลิก</button>
+    <span style="font-weight:700;color:var(--g);font-size:14px;">👀 เตรียมพร้อม</span>
+    <div style="width:55px;"></div>
   </div>
-  <div class="motivate-screen">
-    <div class="card card-gold" style="width:100%; max-width:360px; text-align:center; padding:20px;">
-      <img id="motivate-img" src="" alt="motivate" style="width:100%; border-radius:12px; display:none; margin-bottom:12px;">
-      <div class="basmala" style="font-size:20px; margin-bottom:12px;">يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ</div>
-      <div style="font-size:14px; color:var(--text2);">โอ้บรรดาผู้ศรัทธา จงขอความช่วยเหลือด้วยความอดทนและการละหมาด</div>
+  <div class="mot">
+    <div class="card card-g" style="width:100%;max-width:340px;text-align:center;padding:16px;">
+      <div class="bas" style="font-size:15px;margin-bottom:6px;">يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ</div>
+      <div style="font-size:12px;color:var(--t2);">จงขอความช่วยเหลือด้วยความอดทนและการละหมาด</div>
     </div>
-    <div class="motivate-num" id="countdown-num">60</div>
-    <div style="font-size:16px; color:var(--text3);">เตรียมพร้อม...</div>
-    <button class="btn btn-primary" onclick="startTimer()" id="skip-countdown">ข้ามและเริ่มเลย →</button>
+    <div class="card" style="width:100%;max-width:340px;padding:12px;">
+      <div id="cd-info" style="font-size:12px;color:var(--t2);line-height:1.8;"></div>
+    </div>
+    <img src="https://i.pinimg.com/736x/9e/b1/dd/9eb1dde2c23060eedfe775e39ad09f92.jpg" alt="ดูอา" style="width:100%;max-width:220px;border-radius:10px;box-shadow:var(--shg);">
+    <div class="mot-num" id="cd-num">60</div>
+    <div style="font-size:14px;color:var(--t3);">วินาที — เตรียมพร้อม...</div>
+    <button class="btn bp" onclick="skipCD()">ข้ามและเริ่มเลย →</button>
   </div>
 </div>
 
-
-<!-- PAGE 4.1c: TIMER -->
-<div id="page-timer" class="page" style="background:var(--bg); flex-direction:column;">
+<!-- ===== PAGE: TIMER ===== -->
+<div id="ptm" class="page">
   <div class="topbar">
-    <button class="btn btn-sm btn-danger" onclick="confirmQuit()">⏹ หยุด</button>
-    <span style="font-weight:700; color:var(--primary);">⏱ จับเวลา</span>
-    <div style="width:60px;"></div>
+    <button class="btn bd bs" onclick="confirmQuit()">⏹ หยุด</button>
+    <div style="text-align:center;">
+      <div style="font-weight:700;color:var(--p);font-size:13px;">⏱ จับเวลา</div>
+      <div id="tm-counter" style="font-size:10px;color:var(--t3);"></div>
+    </div>
+    <div style="width:55px;"></div>
   </div>
-  <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px; padding:20px;">
-    <div class="basmala">إِنَّ مَعَ الْعُسْرِ يُسْرًا</div>
-
-    <!-- Timer Circle -->
-    <div style="position:relative; width:200px; height:200px;">
-      <svg viewBox="0 0 200 200" style="position:absolute;inset:0;width:200px;height:200px;">
-        <circle cx="100" cy="100" r="88" fill="none" stroke="var(--bg3)" stroke-width="8"/>
-        <circle id="timer-arc" cx="100" cy="100" r="88" fill="none" stroke="var(--primary)" stroke-width="8"
-          stroke-dasharray="553" stroke-dashoffset="0" stroke-linecap="round"
-          transform="rotate(-90 100 100)" style="transition:stroke-dashoffset 1s linear;"/>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:14px;padding:14px;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+    <div class="bas" style="font-size:13px;">إِنَّ مَعَ الْعُسْرِ يُسْرًا</div>
+    <div class="card card-g" style="width:100%;max-width:320px;padding:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span id="tm-name" style="font-weight:700;font-size:14px;color:var(--p);">ภารกิจ</span>
+        <span id="tm-time" class="tag tgo" style="font-size:10px;"></span>
+      </div>
+      <div id="tm-goal" style="font-size:11px;color:var(--t3);margin-top:4px;"></div>
+    </div>
+    <div style="position:relative;width:180px;height:180px;flex-shrink:0;">
+      <svg viewBox="0 0 200 200" style="position:absolute;inset:0;width:180px;height:180px;">
+        <circle cx="100" cy="100" r="88" fill="none" stroke="var(--bg3)" stroke-width="7"/>
+        <circle id="tarc" cx="100" cy="100" r="88" fill="none" stroke="var(--p)" stroke-width="7" stroke-dasharray="553" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 100 100)" style="transition:stroke-dashoffset 1s linear;"/>
       </svg>
       <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="timer-display" style="font-size:40px;font-weight:700;color:var(--primary);font-family:'Amiri',serif;">00:00</div>
-        <div id="timer-task-name" style="font-size:12px;color:var(--text3);">กำลังทำงาน...</div>
+        <div id="tdisplay" style="font-size:36px;font-weight:700;color:var(--p);font-family:'Amiri',serif;">00:00</div>
+        <div style="font-size:10px;color:var(--t3);">เหลือ</div>
       </div>
     </div>
-
-    <!-- Random Check -->
-    <div id="check-prompt-area" style="width:100%;max-width:340px;display:none;">
-      <div class="check-prompt" style="color:#fff;">
-        <div style="font-size:22px; margin-bottom:8px;">⚡ ยังอยู่ไหม?</div>
-        <div style="font-size:14px; margin-bottom:16px;">กดยืนยันว่ากำลังทำอยู่นะ!</div>
-        <button class="btn btn-full" onclick="confirmStillHere()" 
-          style="background:rgba(255,255,255,0.25);border:2px solid #fff;color:#fff;font-weight:700;">
-          ✅ ใช่! ฉันยังทำอยู่
-        </button>
-        <div id="check-countdown" style="font-size:20px; font-weight:700; margin-top:8px;">30</div>
+    <div id="tqueue" style="width:100%;max-width:320px;"></div>
+    <div id="tchk" style="width:100%;max-width:320px;display:none;">
+      <div class="chk-prompt" style="color:#fff;">
+        <div style="font-size:19px;margin-bottom:5px;">⚡ ยังอยู่ไหม?</div>
+        <div style="font-size:12px;margin-bottom:12px;">กดยืนยันว่ากำลังทำอยู่!</div>
+        <button class="btn bf" onclick="stillHere()" style="background:rgba(255,255,255,.25);border:2px solid #fff;color:#fff;font-weight:700;">✅ ใช่! ฉันยังทำอยู่</button>
+        <div id="chk-cd" style="font-size:18px;font-weight:700;margin-top:7px;">30</div>
       </div>
     </div>
-
-    <!-- Upload -->
-    <div id="upload-area" style="width:100%;max-width:340px;display:none;">
-      <div class="card" style="text-align:center;">
-        <div style="font-size:14px;margin-bottom:12px;">📸 อัปโหลดสรุปวันนี้ (ไม่บังคับ)</div>
-        <input type="text" id="summary-url" placeholder="URL รูปภาพ หรือ ลิ้งก์สรุป" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);margin-bottom:10px;">
-        <textarea id="summary-text" placeholder="เขียนสรุปสั้นๆ..." style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-family:'Sarabun',sans-serif;height:80px;resize:none;"></textarea>
+    <div id="tupload" style="width:100%;max-width:320px;display:none;">
+      <div class="card">
+        <div style="font-size:12px;font-weight:600;margin-bottom:8px;">📸 สรุปวันนี้ (ไม่บังคับ)</div>
+        <input type="text" id="sum-url" placeholder="URL รูปภาพสรุป" style="width:100%;padding:9px;border-radius:8px;border:1px solid var(--b);background:var(--bg2);color:var(--t);margin-bottom:7px;font-family:'Sarabun',sans-serif;font-size:12px;">
+        <textarea id="sum-txt" placeholder="เขียนสรุปสั้นๆ..." style="width:100%;padding:9px;border-radius:8px;border:1px solid var(--b);background:var(--bg2);color:var(--t);font-family:'Sarabun',sans-serif;font-size:12px;height:60px;resize:none;"></textarea>
       </div>
     </div>
   </div>
-
-  <div style="padding:16px;">
-    <button id="finish-btn" class="btn btn-primary btn-full" onclick="finishMission()" style="display:none;">
-      ✅ เสร็จภารกิจ! บันทึก
-    </button>
+  <div style="padding:10px 12px;flex-shrink:0;">
+    <button id="tnext" class="btn bg2 bf" onclick="nextAct()" style="display:none;margin-bottom:7px;">⏭ กิจกรรมถัดไป →</button>
+    <button id="tfinish" class="btn bp bf" onclick="finishMission()" style="display:none;">✅ เสร็จภารกิจทั้งหมด!</button>
   </div>
 </div>
 
-
-<!-- PAGE 4.1d: MISSION COMPLETE -->
-<div id="page-complete" class="page" style="background:var(--bg);">
-  <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;text-align:center;gap:20px;">
-    <div class="bismillah-large">الْحَمْدُ لِلَّهِ</div>
-    <div class="ornament">✦ ✦ ✦</div>
-    <div style="font-size:72px;" id="complete-icon-display">🌳</div>
-    <h2 style="font-size:28px; font-weight:700; color:var(--primary); font-family:'Amiri',serif;">ماشاءالله! เยี่ยมมาก!</h2>
-    <div class="card card-gold" style="max-width:340px;">
-      <div id="complete-msg" style="font-size:15px; line-height:1.7; color:var(--text2);">
-        คุณทำได้แล้ว! วินัยของคุณเติบโตขึ้นอีกนิดหนึ่ง<br>
-        <span style="color:var(--gold); font-weight:600;">ขอดุอาอ์ให้ประสบความสำเร็จ 🤲</span>
-      </div>
+<!-- ===== PAGE: COMPLETE ===== -->
+<div id="pok" class="page">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;text-align:center;gap:16px;overflow-y:auto;">
+    <div class="bas" style="font-size:24px;">الْحَمْدُ لِلَّهِ</div>
+    <div class="orn">✦ ✦ ✦</div>
+    <div style="font-size:60px;" id="ok-icon">🌳</div>
+    <h2 style="font-size:24px;font-weight:700;color:var(--p);font-family:'Amiri',serif;">ماشاءالله! เยี่ยมมาก!</h2>
+    <div class="card card-g" style="max-width:320px;">
+      <div style="font-size:13px;line-height:1.7;color:var(--t2);">คุณทำได้แล้ว! วินัยของคุณเติบโตขึ้น<br><span style="color:var(--g);font-weight:600;">ขอดุอาอ์ให้ประสบความสำเร็จ 🤲</span></div>
     </div>
-    <button class="btn btn-primary btn-full" onclick="showPage('page-main')" style="max-width:300px;">
-      🏡 กลับหน้าหลัก
-    </button>
+    <button class="btn bp bf" onclick="go('pm')" style="max-width:280px;">🏡 กลับหน้าหลัก</button>
   </div>
 </div>
 
-
-<!-- ==============================
-     PAGE 4.2: PLAN
-============================== -->
-<div id="page-plan" class="page" style="background:var(--bg); flex-direction:column;">
+<!-- ===== PAGE: PLAN ===== -->
+<div id="pp" class="page">
   <div class="topbar">
-    <button class="btn btn-sm btn-outline" onclick="showPage('page-main')">← กลับ</button>
-    <span style="font-weight:700; color:var(--primary);">📋 วางแผน</span>
-    <div style="width:60px;"></div>
+    <button class="btn bo bs" onclick="go('pm')">← กลับ</button>
+    <span style="font-weight:700;color:var(--p);font-size:14px;">📋 วางแผน</span>
+    <div style="width:55px;"></div>
   </div>
-  <div class="scroll-area" style="padding:16px;">
-    <!-- Plan Duration Selector -->
-    <div class="card card-gold" style="margin-bottom:16px;">
-      <div class="section-title">ระยะเวลาแผน</div>
-      <div style="display:flex; gap:10px;">
-        <button class="btn btn-sm btn-outline" id="dur-week" onclick="setPlanDur('week',this)" style="flex:1;">1 สัปดาห์</button>
-        <button class="btn btn-sm btn-primary" id="dur-month" onclick="setPlanDur('month',this)" style="flex:1;">1 เดือน</button>
-        <button class="btn btn-sm btn-outline" id="dur-year" onclick="setPlanDur('year',this)" style="flex:1;">1 ปี</button>
+  <div class="page-body" style="padding:12px;">
+    <div class="card card-g" style="margin-bottom:10px;">
+      <div class="st">ระยะเวลาแผน</div>
+      <div style="display:flex;gap:7px;margin-bottom:12px;">
+        <button class="btn bo bs" id="dw" onclick="setDur('week',this)" style="flex:1;font-size:11px;">1 สัปดาห์</button>
+        <button class="btn bp bs" id="dm" onclick="setDur('month',this)" style="flex:1;font-size:11px;">1 เดือน</button>
+        <button class="btn bo bs" id="dy" onclick="setDur('year',this)" style="flex:1;font-size:11px;">1 ปี</button>
       </div>
-      <div class="input-group" style="margin-top:16px; margin-bottom:0;">
-        <label>🎯 เป้าหมายของแผนนี้คือ</label>
-        <input type="text" id="plan-goal" placeholder="เช่น อ่านหนังสือสอบ ONET ให้ผ่าน">
+      <div class="ig" style="margin-bottom:0;"><label>🎯 เป้าหมายของแผน</label><input type="text" id="pg" placeholder="เช่น สอบ ONET ให้ผ่าน"></div>
+    </div>
+    <div class="card" style="margin-bottom:10px;">
+      <div class="st">เพิ่มกิจกรรม</div>
+      <div style="background:var(--bg2);border:1px solid var(--b);border-radius:var(--rs);padding:10px;margin-bottom:9px;">
+        <div class="ig" style="margin-bottom:7px;"><label>📝 ชื่อกิจกรรม</label><input type="text" id="an" placeholder="เช่น อ่านหนังสือ"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
+          <div class="ig" style="margin-bottom:7px;"><label>🕐 เริ่ม</label><input type="time" id="as" value="09:00"></div>
+          <div class="ig" style="margin-bottom:7px;"><label>🕑 สิ้นสุด</label><input type="time" id="ae" value="11:00"></div>
+        </div>
+        <div class="ig" style="margin-bottom:7px;"><label>🎯 เป้าหมาย</label><input type="text" id="ag" placeholder="เช่น เข้าใจบทที่ 1-3"></div>
+        <div class="ig" style="margin-bottom:0;"><label>⏱ นาที</label><input type="number" id="am" value="60"></div>
+      </div>
+      <button class="btn bg2 bs" onclick="addAct()">➕ เพิ่มกิจกรรม</button>
+      <div id="alist" style="margin-top:9px;"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border:1px solid var(--b);border-radius:var(--rs);margin-top:9px;">
+        <div class="row"><span style="font-size:18px;color:var(--p);">🔁</span><span style="font-size:13px;font-weight:500;">ซ้ำแบบนี้ทุกวัน</span></div>
+        <button class="tog on" id="rtog" onclick="this.classList.toggle('on')"></button>
       </div>
     </div>
-
-    <!-- Repeat Option -->
-    <div class="card" style="margin-bottom:16px;">
-      <div class="section-title">ตั้งค่ากิจกรรมประจำวัน</div>
-      <div class="plan-row">
-        <div class="input-group" style="margin-bottom:10px;">
-          <label>📝 ชื่อกิจกรรม</label>
-          <input type="text" id="act-name" placeholder="เช่น อ่านหนังสือ / ออกกำลังกาย">
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-          <div class="input-group" style="margin-bottom:0;">
-            <label>🕐 เวลาเริ่ม</label>
-            <input type="time" id="act-start" value="09:00">
-          </div>
-          <div class="input-group" style="margin-bottom:0;">
-            <label>🕑 เวลาสิ้นสุด</label>
-            <input type="time" id="act-end" value="11:00">
-          </div>
-        </div>
-        <div class="input-group" style="margin-top:10px; margin-bottom:10px;">
-          <label>🎯 เป้าหมายในกิจกรรมนี้</label>
-          <input type="text" id="act-goal" placeholder="เช่น เข้าใจบทที่ 1-3">
-        </div>
-        <div class="input-group" style="margin-bottom:0;">
-          <label>⏱ จำนวนนาที</label>
-          <input type="number" id="act-minutes" placeholder="120" value="120">
-        </div>
-      </div>
-      <button class="btn btn-sm btn-gold" onclick="addActivity()" style="margin-top:12px;">➕ เพิ่มกิจกรรม</button>
-
-      <div id="activities-list" style="margin-top:12px;"></div>
-
-      <!-- Repeat Toggle -->
-      <div class="settings-row" style="margin-top:12px; border:1px solid var(--border); border-radius:var(--radius-sm);">
-        <div class="row">
-          <span class="s-icon">🔁</span>
-          <span class="s-label">ซ้ำแบบนี้ทุกวัน</span>
-        </div>
-        <button class="toggle on" id="repeat-toggle" onclick="this.classList.toggle('on')"></button>
-      </div>
+    <div class="card" style="margin-bottom:10px;">
+      <div class="st">ปฏิทิน</div>
+      <div id="pcal"></div>
     </div>
-
-    <!-- Calendar View -->
-    <div class="card" style="margin-bottom:16px;">
-      <div class="section-title">ปฏิทิน — เลือกวันใส่รายละเอียด</div>
-      <div id="plan-calendar"></div>
-    </div>
-
-    <button class="btn btn-primary btn-full" onclick="savePlan()" style="margin-bottom:20px;">
-      💾 บันทึกแผน กลับหน้าหลัก
-    </button>
+    <button class="btn bp bf" onclick="savePlan()" style="margin-bottom:12px;">💾 บันทึกแผน</button>
+  </div>
+  <div class="bnav">
+    <button class="bnav-btn" onclick="go('pm')"><span class="ni">🏡</span><span>หน้าหลัก</span></button>
+    <button class="bnav-btn" onclick="goMission()"><span class="ni">🚀</span><span>ภารกิจ</span></button>
+    <button class="bnav-btn on" onclick="go('pp')"><span class="ni">📋</span><span>วางแผน</span></button>
+    <button class="bnav-btn" onclick="go('ph')"><span class="ni">📅</span><span>ประวัติ</span></button>
+    <button class="bnav-btn" onclick="go('pi2')"><span class="ni">🎨</span><span>ตั้งค่า</span></button>
   </div>
 </div>
 
-
-<!-- ==============================
-     PAGE 4.3: HISTORY
-============================== -->
-<div id="page-history" class="page" style="background:var(--bg); flex-direction:column;">
+<!-- ===== PAGE: HISTORY ===== -->
+<div id="ph" class="page">
   <div class="topbar">
-    <button class="btn btn-sm btn-outline" onclick="showPage('page-main')">← กลับ</button>
-    <span style="font-weight:700; color:var(--primary);">📅 ประวัติ</span>
-    <div style="width:60px;"></div>
+    <button class="btn bo bs" onclick="go('pm')">← กลับ</button>
+    <span style="font-weight:700;color:var(--p);font-size:14px;">📅 ประวัติ</span>
+    <div style="width:55px;"></div>
   </div>
-  <div class="scroll-area" style="padding:16px;">
-    <div class="basmala" style="margin-bottom:16px; font-size:15px;">كُلُّ نَفْسٍ بِمَا كَسَبَتْ رَهِينَةٌ</div>
-    <div class="card" style="margin-bottom:16px;">
-      <div id="history-calendar"></div>
+  <div class="page-body" style="padding:12px;">
+    <div class="bas" style="margin-bottom:10px;font-size:13px;">كُلُّ نَفْسٍ بِمَا كَسَبَتْ رَهِينَةٌ</div>
+    <div class="card" style="margin-bottom:10px;"><div id="hcal"></div></div>
+    <div id="hdet" style="display:none;" class="card card-g">
+      <div class="st">สรุปวันที่เลือก</div>
+      <div id="hdet-c"></div>
     </div>
-    <div id="history-detail" style="display:none;" class="card card-gold">
-      <div class="section-title">สรุปวันที่เลือก</div>
-      <div id="history-detail-content"></div>
-    </div>
+    <div style="height:12px;"></div>
+  </div>
+  <div class="bnav">
+    <button class="bnav-btn" onclick="go('pm')"><span class="ni">🏡</span><span>หน้าหลัก</span></button>
+    <button class="bnav-btn" onclick="goMission()"><span class="ni">🚀</span><span>ภารกิจ</span></button>
+    <button class="bnav-btn" onclick="go('pp')"><span class="ni">📋</span><span>วางแผน</span></button>
+    <button class="bnav-btn on" onclick="go('ph')"><span class="ni">📅</span><span>ประวัติ</span></button>
+    <button class="bnav-btn" onclick="go('pi2')"><span class="ni">🎨</span><span>ตั้งค่า</span></button>
   </div>
 </div>
 
-
-<!-- ==============================
-     PAGE 4.4: ICON SETTINGS
-============================== -->
-<div id="page-icon-settings" class="page" style="background:var(--bg); flex-direction:column;">
+<!-- ===== PAGE: ICON SETTINGS ===== -->
+<div id="pi2" class="page">
   <div class="topbar">
-    <button class="btn btn-sm btn-outline" onclick="showPage('page-main')">← กลับ</button>
-    <span style="font-weight:700; color:var(--primary);">🎨 ตั้งค่า Icon / ข้อความ</span>
-    <div style="width:60px;"></div>
+    <button class="btn bo bs" onclick="go('pm')">← กลับ</button>
+    <span style="font-weight:700;color:var(--p);font-size:14px;">🎨 ตั้งค่า Icon</span>
+    <div style="width:55px;"></div>
   </div>
-  <div class="scroll-area" style="padding:16px;">
-
-    <!-- Icon Choice -->
-    <div class="card card-gold" style="margin-bottom:16px;">
-      <div class="section-title">🌟 เลือก Icon</div>
-      <div class="icon-choice-grid">
-        <div class="icon-choice selected" id="ic-tree" onclick="selectIcon('tree', this)">
-          <svg viewBox="0 0 40 40"><rect x="17" y="30" width="6" height="10" fill="#8B6914" rx="2"/><ellipse cx="20" cy="20" rx="14" ry="16" fill="#2d9966"/><ellipse cx="20" cy="14" rx="10" ry="12" fill="#3dba7e"/></svg>
-          <span>ต้นไม้</span>
-        </div>
-        <div class="icon-choice" id="ic-house" onclick="selectIcon('house', this)">
-          <svg viewBox="0 0 40 40"><rect x="8" y="22" width="24" height="16" fill="#c8962a" rx="2"/><polygon points="4,22 20,8 36,22" fill="#8B6914"/><rect x="16" y="28" width="8" height="10" fill="#7a5010"/></svg>
-          <span>บ้าน</span>
-        </div>
-        <div class="icon-choice" id="ic-city" onclick="selectIcon('city', this)">
-          <svg viewBox="0 0 40 40"><rect x="4" y="20" width="8" height="18" fill="#1a6b4a" rx="1"/><rect x="14" y="12" width="12" height="26" fill="#2d9966" rx="1"/><rect x="28" y="16" width="8" height="22" fill="#1a6b4a" rx="1"/><rect x="6" y="22" width="2" height="3" fill="#fff" opacity=".6"/><rect x="16" y="14" width="3" height="3" fill="#fff" opacity=".6"/></svg>
-          <span>เมือง</span>
-        </div>
-        <div class="icon-choice" id="ic-car" onclick="selectIcon('car', this)">
-          <svg viewBox="0 0 40 40"><rect x="4" y="22" width="32" height="12" fill="#2d9966" rx="4"/><polygon points="8,22 12,14 28,14 32,22" fill="#1a6b4a"/><circle cx="12" cy="34" r="4" fill="#333"/><circle cx="28" cy="34" r="4" fill="#333"/><rect x="13" y="16" width="6" height="5" fill="#87ceeb" rx="1"/><rect x="21" y="16" width="6" height="5" fill="#87ceeb" rx="1"/></svg>
-          <span>รถ</span>
-        </div>
+  <div class="page-body" style="padding:12px;">
+    <div class="card card-g" style="margin-bottom:10px;">
+      <div class="st">🌟 เลือก Icon</div>
+      <div class="icg">
+        <div class="ic sel" id="ic-tree" onclick="selIcon('tree',this)"><svg viewBox="0 0 40 40"><rect x="17" y="30" width="6" height="10" fill="#8B6914" rx="2"/><ellipse cx="20" cy="20" rx="14" ry="16" fill="#2d9966"/><ellipse cx="20" cy="14" rx="10" ry="12" fill="#3dba7e"/></svg><span>ต้นไม้</span></div>
+        <div class="ic" id="ic-house" onclick="selIcon('house',this)"><svg viewBox="0 0 40 40"><rect x="8" y="22" width="24" height="16" fill="#c8962a" rx="2"/><polygon points="4,22 20,8 36,22" fill="#8B6914"/><rect x="16" y="28" width="8" height="10" fill="#7a5010"/></svg><span>บ้าน</span></div>
+        <div class="ic" id="ic-city" onclick="selIcon('city',this)"><svg viewBox="0 0 40 40"><rect x="4" y="20" width="8" height="18" fill="#1a6b4a" rx="1"/><rect x="14" y="12" width="12" height="26" fill="#2d9966" rx="1"/><rect x="28" y="16" width="8" height="22" fill="#1a6b4a" rx="1"/></svg><span>เมือง</span></div>
+        <div class="ic" id="ic-car" onclick="selIcon('car',this)"><svg viewBox="0 0 40 40"><rect x="4" y="22" width="32" height="12" fill="#2d9966" rx="4"/><polygon points="8,22 12,14 28,14 32,22" fill="#1a6b4a"/><circle cx="12" cy="34" r="4" fill="#333"/><circle cx="28" cy="34" r="4" fill="#333"/></svg><span>รถ</span></div>
       </div>
     </div>
-
-    <!-- Message Style -->
-    <div class="card" style="margin-bottom:16px;">
-      <div class="section-title">💬 สไตล์ข้อความบนหน้าจอ</div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-        <button class="btn btn-outline btn-full" id="msg-cheer" onclick="setMsgStyle('cheer', this)" style="font-size:13px;">🤲 ให้กำลังใจ</button>
-        <button class="btn btn-outline btn-full" id="msg-islamic" onclick="setMsgStyle('islamic', this)" style="font-size:13px;">📖 แบบอิสลาม</button>
-        <button class="btn btn-outline btn-full" id="msg-scold" onclick="setMsgStyle('scold', this)" style="font-size:13px;">😤 ด่า</button>
-        <button class="btn btn-outline btn-full" id="msg-brutal" onclick="setMsgStyle('brutal', this)" style="font-size:13px;">🔥 ด่าเจ็บแสบ</button>
+    <div class="card" style="margin-bottom:10px;">
+      <div class="st">💬 สไตล์ข้อความหน้าจอ</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
+        <button class="btn bo bf bs" id="ms-cheer" onclick="setMsg('cheer',this)">🤲 ให้กำลังใจ</button>
+        <button class="btn bo bf bs" id="ms-islamic" onclick="setMsg('islamic',this)">📖 อิสลาม</button>
+        <button class="btn bo bf bs" id="ms-scold" onclick="setMsg('scold',this)">😤 ด่า</button>
+        <button class="btn bo bf bs" id="ms-brutal" onclick="setMsg('brutal',this)">🔥 ด่าเจ็บแสบ</button>
       </div>
-      <div id="msg-preview" class="card card-gold" style="margin-top:16px; font-size:13px; line-height:1.8; color:var(--text2);">
-        เลือกสไตล์เพื่อดูตัวอย่าง...
-      </div>
+      <div id="msg-prev" class="card card-g" style="margin-top:10px;font-size:11px;line-height:1.8;color:var(--t2);white-space:pre-line;">เลือกสไตล์เพื่อดูตัวอย่าง...</div>
     </div>
-
-    <!-- Discord Notification Style -->
-    <div class="card" style="margin-bottom:16px;">
-      <div class="section-title">🔔 สไตล์แจ้งเตือน Discord</div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-        <button class="btn btn-outline btn-full" id="notif-cheer" onclick="setNotifStyle('cheer', this)" style="font-size:13px;">🤲 ให้กำลังใจ</button>
-        <button class="btn btn-outline btn-full" id="notif-islamic" onclick="setNotifStyle('islamic', this)" style="font-size:13px;">📖 อิสลาม</button>
-        <button class="btn btn-outline btn-full" id="notif-scold" onclick="setNotifStyle('scold', this)" style="font-size:13px;">😤 ด่า</button>
-        <button class="btn btn-outline btn-full" id="notif-brutal" onclick="setNotifStyle('brutal', this)" style="font-size:13px;">🔥 ด่าเจ็บแสบ</button>
+    <div class="card" style="margin-bottom:10px;">
+      <div class="st">🔔 สไตล์แจ้งเตือน Discord</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
+        <button class="btn bo bf bs" id="ns-cheer" onclick="setNotif('cheer',this)">🤲 ให้กำลังใจ</button>
+        <button class="btn bo bf bs" id="ns-islamic" onclick="setNotif('islamic',this)">📖 อิสลาม</button>
+        <button class="btn bo bf bs" id="ns-scold" onclick="setNotif('scold',this)">😤 ด่า</button>
+        <button class="btn bo bf bs" id="ns-brutal" onclick="setNotif('brutal',this)">🔥 ด่าเจ็บแสบ</button>
       </div>
-      <div id="notif-preview" class="card" style="margin-top:16px; font-size:12px; line-height:1.8; background:var(--bg3); border-left:4px solid var(--primary); padding:14px;">
-        เลือกสไตล์เพื่อดูตัวอย่าง...
-      </div>
+      <div id="notif-prev" class="card" style="margin-top:10px;font-size:11px;line-height:1.8;background:var(--bg3);border-left:3px solid var(--p);padding:10px;white-space:pre-line;">เลือกสไตล์เพื่อดูตัวอย่าง...</div>
     </div>
-
-    <button class="btn btn-primary btn-full" onclick="saveIconSettings(); showPage('page-main');" style="margin-bottom:20px;">
-      💾 บันทึกการตั้งค่า
-    </button>
+    <button class="btn bp bf" onclick="saveIconSet();go('pm');" style="margin-bottom:12px;">💾 บันทึกการตั้งค่า</button>
+  </div>
+  <div class="bnav">
+    <button class="bnav-btn" onclick="go('pm')"><span class="ni">🏡</span><span>หน้าหลัก</span></button>
+    <button class="bnav-btn" onclick="goMission()"><span class="ni">🚀</span><span>ภารกิจ</span></button>
+    <button class="bnav-btn" onclick="go('pp')"><span class="ni">📋</span><span>วางแผน</span></button>
+    <button class="bnav-btn" onclick="go('ph')"><span class="ni">📅</span><span>ประวัติ</span></button>
+    <button class="bnav-btn on" onclick="go('pi2')"><span class="ni">🎨</span><span>ตั้งค่า</span></button>
   </div>
 </div>
 
-
-<!-- ==============================
-     PAGE 5: SETTINGS
-============================== -->
-<div id="page-settings" class="page" style="background:var(--bg); flex-direction:column;">
+<!-- ===== PAGE: SETTINGS ===== -->
+<div id="ps" class="page">
   <div class="topbar">
-    <button class="btn btn-sm btn-outline" onclick="showPage('page-main')">← กลับ</button>
-    <span style="font-weight:700; color:var(--primary);">⚙ การตั้งค่า</span>
-    <div style="width:60px;"></div>
+    <button class="btn bo bs" onclick="go('pm')">← กลับ</button>
+    <span style="font-weight:700;color:var(--p);font-size:14px;">⚙ การตั้งค่า</span>
+    <div style="width:55px;"></div>
   </div>
-  <div class="scroll-area" style="padding:16px;">
-    <div class="basmala" style="margin-bottom:16px; font-size:14px;">إِنَّ اللَّهَ لَا يُغَيِّرُ مَا بِقَوْمٍ حَتَّىٰ يُغَيِّرُوا مَا بِأَنفُسِهِمْ</div>
-
-    <!-- Profile Info -->
-    <div class="card card-gold" style="margin-bottom:16px;">
-      <div class="section-title">👤 ข้อมูลบัญชี</div>
-      <div style="display:flex; align-items:center; gap:14px;">
-        <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--gold));display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;font-weight:700;" id="profile-avatar">ب</div>
-        <div>
-          <div id="profile-name" style="font-weight:600; font-size:16px;">ชื่อ นามสกุล</div>
-          <div id="profile-class" style="font-size:13px; color:var(--text3);">ชั้น — อนาคต</div>
-        </div>
+  <div class="page-body" style="padding:12px;">
+    <div class="bas" style="margin-bottom:10px;font-size:12px;">إِنَّ اللَّهَ لَا يُغَيِّرُ مَا بِقَوْمٍ حَتَّىٰ يُغَيِّرُوا مَا بِأَنفُسِهِمْ</div>
+    <div class="card card-g" style="margin-bottom:10px;">
+      <div class="st">👤 ข้อมูลบัญชี</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--g));display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;font-weight:700;flex-shrink:0;" id="pavt">ب</div>
+        <div><div id="pname" style="font-weight:600;font-size:14px;">ชื่อ นามสกุล</div><div id="pcls" style="font-size:11px;color:var(--t3);">ชั้น — อนาคต</div></div>
       </div>
     </div>
-
-    <!-- Change Password -->
-    <div class="card" style="margin-bottom:16px;">
-      <div class="section-title">🔒 เปลี่ยนรหัสผ่าน</div>
-      <div class="input-group">
-        <label>รหัสผ่านใหม่</label>
-        <div class="eye-wrap">
-          <input type="password" id="new-pass" placeholder="รหัสผ่านใหม่">
-          <button class="eye-btn" onclick="toggleEye('new-pass', this)">👁</button>
-        </div>
-      </div>
-      <div class="input-group">
-        <label>ยืนยันรหัสผ่านอีกครั้ง</label>
-        <div class="eye-wrap">
-          <input type="password" id="confirm-pass" placeholder="ยืนยันรหัสผ่าน">
-          <button class="eye-btn" onclick="toggleEye('confirm-pass', this)">👁</button>
-        </div>
-      </div>
-      <button class="btn btn-outline btn-full" onclick="changePassword()">✅ ยืนยันเปลี่ยนรหัสผ่าน</button>
+    <div class="card" style="margin-bottom:10px;">
+      <div class="st">🔒 เปลี่ยนรหัสผ่าน</div>
+      <div class="ig"><label>รหัสผ่านใหม่</label><div class="ew"><input type="password" id="np" placeholder="รหัสผ่านใหม่"><button class="eb" onclick="eye('np',this)">👁</button></div></div>
+      <div class="ig"><label>ยืนยันอีกครั้ง</label><div class="ew"><input type="password" id="cp" placeholder="ยืนยันรหัสผ่าน"><button class="eb" onclick="eye('cp',this)">👁</button></div></div>
+      <button class="btn bo bf bs" onclick="chgPass()">✅ ยืนยันเปลี่ยนรหัสผ่าน</button>
     </div>
-
-    <!-- Discord Webhook -->
-    <div class="card" style="margin-bottom:16px;">
-      <div class="section-title">🔔 Discord Webhook แจ้งเตือน</div>
-      <div class="input-group" style="margin-bottom:10px;">
-        <label>Webhook URL</label>
-        <input type="url" id="webhook-url" placeholder="https://discord.com/api/webhooks/...">
-      </div>
-      <button class="btn btn-sm btn-outline" onclick="testWebhook()">🧪 ทดสอบการส่ง</button>
-      <button class="btn btn-sm btn-primary" onclick="saveWebhook()" style="margin-left:8px;">💾 บันทึก</button>
-    </div>
-
-    <!-- Dark Mode -->
-    <div class="settings-group">
-      <div class="settings-row">
-        <div class="row">
-          <span class="s-icon">🌙</span>
-          <span class="s-label">โหมดมืด</span>
-        </div>
-        <button class="toggle" id="dark-toggle" onclick="toggleDark()"></button>
+    <div class="card" style="margin-bottom:10px;">
+      <div class="st">🔔 Discord Webhook <span style="color:var(--danger);">*จำเป็น</span></div>
+      <div class="ig" style="margin-bottom:8px;"><label>Webhook URL</label><input type="url" id="whu" placeholder="https://discord.com/api/webhooks/..."></div>
+      <div style="display:flex;gap:7px;">
+        <button class="btn bo bs" onclick="testWH()">🧪 ทดสอบ</button>
+        <button class="btn bp bs" onclick="saveWH()">💾 บันทึก</button>
       </div>
     </div>
-
-    <!-- Firebase Config -->
-    <div class="card" style="margin-bottom:16px; border-color:var(--border2);">
-      <div class="section-title" style="color:var(--gold);">🔥 Firebase Configuration</div>
-      <div style="font-size:12px; color:var(--text3); margin-bottom:10px;">ใส่ค่าจาก Firebase Console ของคุณ</div>
-      <div class="input-group"><label>API Key</label><input type="text" id="fb-apikey" placeholder="AIzaSy..."></div>
-      <div class="input-group"><label>Auth Domain</label><input type="text" id="fb-authdomain" placeholder="yourapp.firebaseapp.com"></div>
-      <div class="input-group"><label>Project ID</label><input type="text" id="fb-projectid" placeholder="your-project-id"></div>
-      <div class="input-group"><label>Storage Bucket</label><input type="text" id="fb-bucket" placeholder="yourapp.appspot.com"></div>
-      <div class="input-group"><label>Messaging Sender ID</label><input type="text" id="fb-senderid" placeholder="123456789"></div>
-      <div class="input-group" style="margin-bottom:0;"><label>App ID</label><input type="text" id="fb-appid" placeholder="1:123:web:abc123"></div>
-      <button class="btn btn-gold btn-full" onclick="initFirebaseFromSettings()" style="margin-top:14px;">🚀 เชื่อมต่อ Firebase</button>
+    <div class="card" style="margin-bottom:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;">
+        <div class="row"><span style="font-size:18px;color:var(--p);">🌙</span><span style="font-size:13px;font-weight:500;">โหมดมืด</span></div>
+        <button class="tog" id="dtog" onclick="toggleDark()"></button>
+      </div>
     </div>
-
-    <!-- Supabase Config -->
-    <div class="card" style="margin-bottom:16px;">
-      <div class="section-title" style="color:var(--primary);">🟢 Supabase Configuration</div>
-      <div style="font-size:12px; color:var(--text3); margin-bottom:10px;">ใส่ค่าจาก Supabase Dashboard</div>
-      <div class="input-group"><label>Supabase URL</label><input type="text" id="sb-url" placeholder="https://xxxxx.supabase.co"></div>
-      <div class="input-group" style="margin-bottom:0;"><label>Anon Key</label><input type="text" id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></div>
-      <button class="btn btn-primary btn-full" onclick="initSupabaseFromSettings()" style="margin-top:14px;">🔗 เชื่อมต่อ Supabase</button>
+    <div class="card" style="margin-bottom:10px;border-color:var(--b2);">
+      <div class="st" style="color:var(--g);">🔥 Firebase Configuration</div>
+      <div style="font-size:11px;color:var(--t3);margin-bottom:9px;">ใส่ค่าจาก Firebase Console ส่วนตัว (ถ้าต้องการ)</div>
+      <div class="ig"><label>API Key</label><input type="text" id="fb1" placeholder="AIzaSy..."></div>
+      <div class="ig"><label>Auth Domain</label><input type="text" id="fb2" placeholder="yourapp.firebaseapp.com"></div>
+      <div class="ig"><label>Project ID</label><input type="text" id="fb3" placeholder="your-project-id"></div>
+      <div class="ig"><label>Storage Bucket</label><input type="text" id="fb4" placeholder="yourapp.appspot.com"></div>
+      <div class="ig"><label>Sender ID</label><input type="text" id="fb5" placeholder="123456789"></div>
+      <div class="ig" style="margin-bottom:0;"><label>App ID</label><input type="text" id="fb6" placeholder="1:123:web:abc123"></div>
+      <button class="btn bg2 bf bs" onclick="initFB()" style="margin-top:10px;">🚀 เชื่อมต่อ Firebase</button>
     </div>
-
-    <!-- Logout -->
     <div class="divider"></div>
-    <button class="btn btn-danger btn-full" onclick="doLogout()" style="margin-bottom:24px;">
-      🚪 ออกจากระบบ
-    </button>
+    <button class="btn bd bf" onclick="doLogout()" style="margin-bottom:12px;">🚪 ออกจากระบบ</button>
+  </div>
+  <div class="bnav">
+    <button class="bnav-btn" onclick="go('pm')"><span class="ni">🏡</span><span>หน้าหลัก</span></button>
+    <button class="bnav-btn" onclick="goMission()"><span class="ni">🚀</span><span>ภารกิจ</span></button>
+    <button class="bnav-btn" onclick="go('pp')"><span class="ni">📋</span><span>วางแผน</span></button>
+    <button class="bnav-btn" onclick="go('ph')"><span class="ni">📅</span><span>ประวัติ</span></button>
+    <button class="bnav-btn" onclick="go('pi2')"><span class="ni">🎨</span><span>ตั้งค่า</span></button>
   </div>
 </div>
 
-
-<!-- ==============================
-     PAGE: MANUAL
-============================== -->
-<div id="page-manual" class="page" style="background:var(--bg); flex-direction:column;">
+<!-- ===== PAGE: MANUAL ===== -->
+<div id="pman" class="page">
   <div class="topbar">
-    <button class="btn btn-sm btn-outline" onclick="showPage('page-main')">← กลับ</button>
-    <span style="font-weight:700; color:var(--gold);">📖 คู่มือการใช้งาน</span>
-    <div style="width:60px;"></div>
+    <button class="btn bo bs" onclick="go('pm')">← กลับ</button>
+    <span style="font-weight:700;color:var(--g);font-size:14px;">📖 คู่มือ</span>
+    <div style="width:55px;"></div>
   </div>
-  <div class="scroll-area" style="padding:16px 16px 32px;">
-    <div class="basmala" style="margin-bottom:12px;">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
-    <div class="ornament" style="margin-bottom:20px;">✦ دَلِيلُ الاسْتِخْدَام ✦</div>
+  <div class="page-body" style="padding:12px 12px 32px;">
+    <div class="bas" style="margin-bottom:9px;">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+    <div class="orn" style="margin-bottom:14px;font-size:14px;">✦ دَلِيلُ الاسْتِخْدَام ✦</div>
+    <div class="card card-g" style="margin-bottom:10px;"><div style="font-size:14px;font-weight:700;color:var(--p);margin-bottom:7px;">1️⃣ ลงทะเบียน / เข้าสู่ระบบ</div><div style="font-size:12px;color:var(--t2);line-height:1.9;">• กด ลงทะเบียน → กรอกข้อมูลให้ครบ<br>• รหัสผ่านอย่างน้อย 6 ตัว<br>• กด 👁 ดู/ซ่อนรหัสผ่าน</div></div>
+    <div class="card" style="margin-bottom:10px;"><div style="font-size:14px;font-weight:700;color:var(--p);margin-bottom:7px;">2️⃣ วางแผน</div><div style="font-size:12px;color:var(--t2);line-height:1.9;">• เลือกระยะเวลา → ใส่เป้าหมาย<br>• กด ➕ เพิ่มกิจกรรม → ใส่ชื่อ เวลา เป้าหมาย นาที<br>• เปิด 🔁 ซ้ำทุกวัน → กด 💾 บันทึก</div></div>
+    <div class="card card-g" style="margin-bottom:10px;"><div style="font-size:14px;font-weight:700;color:var(--p);margin-bottom:7px;">3️⃣ เริ่มภารกิจ</div><div style="font-size:12px;color:var(--t2);line-height:1.9;"><span style="color:var(--g);">①</span> กดเริ่มต้นเลย<br><span style="color:var(--g);">②</span> นับถอยหลัง 60 วิ<br><span style="color:var(--g);">③</span> จับเวลาตามแผน | ⚡ Pop-up ตรวจ 3 ครั้ง<br><span style="color:var(--g);">④</span> กิจกรรมเสร็จ → ⏭ ถัดไป<br><span style="color:var(--g);">⑤</span> ✅ เสร็จภารกิจทั้งหมด</div></div>
+    <div class="card" style="margin-bottom:10px;"><div style="font-size:14px;font-weight:700;color:var(--p);margin-bottom:7px;">4️⃣ แจ้งเตือนก่อนเวลา 2 นาที</div><div style="font-size:12px;color:var(--t2);line-height:1.9;">• ระบบจะแจ้งเตือนอัตโนมัติก่อนถึงเวลาแผน 2 นาที<br>• ตัวอย่าง: แผน 19:00 น. → แจ้งเตือน 18:58 น.<br>• ✅ ต้องอนุญาต Notification ในเบราว์เซอร์<br>• หน้าหลักจะแสดง badge 🔴 ถ้ายังไม่ได้อนุญาต<br>• กด ⚙ ตั้งค่า → บันทึก Discord ด้วย</div></div>
+    <div class="card card-g" style="margin-bottom:10px;"><div style="font-size:14px;font-weight:700;color:var(--g);margin-bottom:7px;">5️⃣ Discord Webhook ⚠️</div><div style="font-size:12px;color:var(--t2);line-height:1.9;"><span style="color:var(--g);">①</span> Discord → ห้อง → ⚙ ตั้งค่า<br><span style="color:var(--g);">②</span> Integrations → Webhooks → New<br><span style="color:var(--g);">③</span> Copy URL → วางในหน้าตั้งค่า<br><span style="color:var(--g);">④</span> กด 💾 บันทึก + 🧪 ทดสอบ</div></div>
+    <div class="card card-g" style="text-align:center;padding:16px;"><div class="bas" style="font-size:16px;margin-bottom:5px;">وَمَن جَاهَدَ فَإِنَّمَا يُجَاهِدُ لِنَفْسِهِ</div><div style="font-size:11px;color:var(--t3);">ผู้ใดพยายาม แท้จริงเขาพยายามเพื่อตัวเอง</div></div>
+  </div>
+</div>
 
-    <!-- Section 1 -->
-    <div class="card card-gold" style="margin-bottom:14px;">
-      <div style="font-size:16px; font-weight:700; color:var(--primary); margin-bottom:10px;">1️⃣ การสมัครและเข้าสู่ระบบ</div>
-      <div style="font-size:13px; color:var(--text2); line-height:1.9;">
-        • กด <b>ลงทะเบียน</b> → กรอกชื่อผู้ใช้ รหัสผ่าน ชื่อ นามสกุล ชั้น และอนาคตที่ฝันไว้<br>
-        • รหัสผ่านต้องมีอย่างน้อย <b>6 ตัวอักษร</b><br>
-        • กด 👁 เพื่อดูหรือซ่อนรหัสผ่านได้<br>
-        • ข้อมูลถูกบันทึกลงในอุปกรณ์ของคุณและ Firebase (ถ้าตั้งค่าแล้ว)
-      </div>
-    </div>
-
-    <!-- Section 2 -->
-    <div class="card" style="margin-bottom:14px;">
-      <div style="font-size:16px; font-weight:700; color:var(--primary); margin-bottom:10px;">2️⃣ การวางแผน (📋 Plan)</div>
-      <div style="font-size:13px; color:var(--text2); line-height:1.9;">
-        • เลือกระยะเวลา: <b>1 สัปดาห์ / 1 เดือน / 1 ปี</b><br>
-        • ใส่เป้าหมายรวมของแผน เช่น "สอบ ONET ให้ได้ 80+"<br>
-        • กด <b>➕ เพิ่มกิจกรรม</b> → ใส่ชื่อ เวลาเริ่ม-สิ้นสุด เป้าหมาย จำนวนนาที<br>
-        • เปิดสวิตช์ <b>🔁 ซ้ำทุกวัน</b> เพื่อใช้แผนเดิมทุกวัน<br>
-        • กด <b>💾 บันทึกแผน</b> เพื่อยืนยัน
-      </div>
-    </div>
-
-    <!-- Section 3 -->
-    <div class="card card-gold" style="margin-bottom:14px;">
-      <div style="font-size:16px; font-weight:700; color:var(--primary); margin-bottom:10px;">3️⃣ เริ่มภารกิจ (🚀 Start)</div>
-      <div style="font-size:13px; color:var(--text2); line-height:1.9;">
-        <b>ขั้นตอน:</b><br>
-        <span style="color:var(--gold);">①</span> กด <b>เริ่มต้นเลย</b> → ดูแผนวันนี้ แก้ไขได้ก่อนเริ่ม<br>
-        <span style="color:var(--gold);">②</span> หน้า <b>นับถอยหลัง 60 วิ</b> → อ่านอายัตกุรอาน เตรียมใจ หรือกดข้ามได้<br>
-        <span style="color:var(--gold);">③</span> หน้า <b>จับเวลา</b> → นับถอยหลังตามแผน<br>
-        &nbsp;&nbsp;&nbsp;⚡ จะมี <b>Pop-up ถาม 3 ครั้ง</b> ว่ายังทำอยู่ไหม (สุ่มเวลา) ต้องกดยืนยันภายใน 30 วิ<br>
-        <span style="color:var(--gold);">④</span> เมื่อเหลือ 1 นาที → อัปโหลดสรุป (URL รูป หรือข้อความ) <b>ไม่บังคับ</b><br>
-        <span style="color:var(--gold);">⑤</span> กด <b>✅ เสร็จภารกิจ!</b> → บันทึก + ส่งแจ้งเตือน Discord
-      </div>
-    </div>
-
-    <!-- Section 4 -->
-    <div class="card" style="margin-bottom:14px;">
-      <div style="font-size:16px; font-weight:700; color:var(--primary); margin-bottom:10px;">4️⃣ ดูประวัติ (📅 History)</div>
-      <div style="font-size:13px; color:var(--text2); line-height:1.9;">
-        • ปฏิทินแสดงวันที่ทำสำเร็จด้วย <span style="color:var(--primary);">●</span> สีเขียว<br>
-        • กดวันใดก็ได้เพื่อดูสรุปรายละเอียด<br>
-        • วันที่ทำสำเร็จจะมีพื้นหลังสีเขียวอ่อน
-      </div>
-    </div>
-
-    <!-- Section 5 -->
-    <div class="card card-gold" style="margin-bottom:14px;">
-      <div style="font-size:16px; font-weight:700; color:var(--primary); margin-bottom:10px;">5️⃣ ตั้งค่า Icon และข้อความ (🎨)</div>
-      <div style="font-size:13px; color:var(--text2); line-height:1.9;">
-        <b>เลือก Icon:</b> ต้นไม้ / บ้าน / เมือง / รถ<br>
-        &nbsp;→ Icon จะเจริญตามความคืบหน้า วงแหวนทองรอบ Icon = % ที่ทำสำเร็จ<br><br>
-        <b>สไตล์ข้อความหน้าจอ:</b><br>
-        🤲 <b>ให้กำลังใจ</b> — ข้อความอ่อนโยน บวก<br>
-        📖 <b>แบบอิสลาม</b> — อ้างอิงอัลกุรอาน/ฮาดิษ<br>
-        😤 <b>ด่า</b> — กระตุ้นแบบตรงๆ<br>
-        🔥 <b>ด่าเจ็บแสบ</b> — สำหรับคนที่ต้องการแรงกระตุ้นสูง ⚠️<br><br>
-        <b>สไตล์แจ้งเตือน Discord</b> — ข้อความที่ส่งไป Discord เมื่อไม่ทำภารกิจ
-      </div>
-    </div>
-
-    <!-- Section 6 Discord -->
-    <div class="card" style="margin-bottom:14px; border-color:var(--border2);">
-      <div style="font-size:16px; font-weight:700; color:var(--gold); margin-bottom:10px;">6️⃣ ตั้งค่า Discord Webhook ⚠️ สำคัญมาก</div>
-      <div style="font-size:13px; color:var(--text2); line-height:1.9;">
-        <b>Discord Webhook จำเป็นต้องใส่</b> เพื่อรับการแจ้งเตือนทุกวัน<br><br>
-        <b>วิธีสร้าง Webhook URL:</b><br>
-        <span style="color:var(--gold);">①</span> เปิด Discord → เข้าห้องที่ต้องการรับแจ้งเตือน<br>
-        <span style="color:var(--gold);">②</span> กด <b>ตั้งค่าห้อง (⚙)</b> → เมนู <b>Integrations</b><br>
-        <span style="color:var(--gold);">③</span> กด <b>Webhooks → New Webhook</b><br>
-        <span style="color:var(--gold);">④</span> ตั้งชื่อ (เช่น "แบยี") → กด <b>Copy Webhook URL</b><br>
-        <span style="color:var(--gold);">⑤</span> วาง URL ที่ได้ในหน้า ⚙ ตั้งค่า → ช่อง <b>Discord Webhook</b><br>
-        <span style="color:var(--gold);">⑥</span> กด <b>💾 บันทึก</b> และ <b>🧪 ทดสอบ</b> ว่าได้รับข้อความหรือไม่<br><br>
-        <div style="background:rgba(200,150,42,0.1); border-radius:8px; padding:10px; font-size:12px; color:var(--text3);">
-          ⚠️ ถ้าไม่ใส่ Discord Webhook การแจ้งเตือนจะไม่ทำงาน
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 7 Firebase -->
-    <div class="card card-gold" style="margin-bottom:14px;">
-      <div style="font-size:16px; font-weight:700; color:var(--primary); margin-bottom:10px;">7️⃣ Firebase — บันทึกข้อมูลออนไลน์</div>
-      <div style="font-size:13px; color:var(--text2); line-height:1.9;">
-        ข้อมูลทั้งหมด (ประวัติ, แผน, บัญชี) จะถูกบันทึกใน Firebase ของแอดมิน<br>
-        ไม่ต้องตั้งค่าเอง ข้อมูลจะซิงค์ข้ามอุปกรณ์ได้อัตโนมัติ<br><br>
-        <b>ถ้าต้องการ Firebase ส่วนตัว:</b><br>
-        ไปที่ ⚙ ตั้งค่า → 🔥 Firebase Configuration → ใส่ค่าจาก Firebase Console ของคุณ<br>
-        แล้วกด <b>🚀 เชื่อมต่อ Firebase</b>
-      </div>
-    </div>
-
-    <!-- Section 8 Icon meaning -->
-    <div class="card" style="margin-bottom:14px;">
-      <div style="font-size:16px; font-weight:700; color:var(--primary); margin-bottom:10px;">8️⃣ ความหมายของ Icon</div>
-      <div style="font-size:13px; color:var(--text2); line-height:1.9;">
-        <b>🌳 ต้นไม้</b> — ทำสำเร็จ = เขียวสด, ล้มเหลว = เหี่ยวแห้ง 🍂<br>
-        <b>🏠 บ้าน</b> — ทำสำเร็จ = บ้านสวยงาม, ล้มเหลว = บ้านพัง 💥<br>
-        <b>🏙 เมือง</b> — ทำสำเร็จ = เมืองเจริญ, ล้มเหลว = เมืองถูกถล่ม 🔥<br>
-        <b>🚗 รถ</b> — ทำสำเร็จ = รถใหม่วิ่งดี, ล้มเหลว = รถพัง 💢<br><br>
-        <b>วงแหวนทอง</b> รอบ Icon = % ความคืบหน้าของแผนทั้งหมด<br>
-        <b>🔥 Streak</b> = จำนวนวันที่ทำต่อเนื่อง
-      </div>
-    </div>
-
-    <div class="card card-gold" style="text-align:center; padding:20px;">
-      <div class="basmala" style="font-size:20px; margin-bottom:8px;">وَمَن جَاهَدَ فَإِنَّمَا يُجَاهِدُ لِنَفْسِهِ</div>
-      <div style="font-size:13px; color:var(--text3);">ผู้ใดพยายามต่อสู้ แท้จริงเขาพยายามเพื่อตัวเอง</div>
+<!-- MODALS -->
+<div class="mo" id="modal-discord">
+  <div class="mbox">
+    <div class="mt" style="color:var(--g);">🔔 ตั้งค่า Discord ก่อน!</div>
+    <div style="font-size:12px;color:var(--t2);line-height:1.8;margin-bottom:12px;">Discord Webhook จำเป็นสำหรับแจ้งเตือน กรุณาใส่ URL:</div>
+    <div class="ig"><label>Discord Webhook URL</label><input type="url" id="mwhu" placeholder="https://discord.com/api/webhooks/..."></div>
+    <div style="font-size:11px;color:var(--t3);margin-bottom:12px;">📖 Discord → ห้อง → ⚙ → Integrations → Webhooks → Copy URL</div>
+    <div style="display:flex;gap:7px;">
+      <button class="btn bg2 bf" onclick="saveDcModal()">💾 บันทึก</button>
+      <button class="btn bo bs" onclick="closeModal('modal-discord')">ข้าม</button>
     </div>
   </div>
 </div>
 
-
-<!-- ==============================
-     MODAL: Discord Required
-============================== -->
-<div class="modal-overlay" id="discord-modal">
-  <div class="modal">
-    <div class="modal-title" style="color:var(--gold);">🔔 ตั้งค่า Discord ก่อนเลย!</div>
-    <div style="font-size:14px; color:var(--text2); line-height:1.8; margin-bottom:16px;">
-      Discord Webhook จำเป็นต้องใส่เพื่อให้ระบบแจ้งเตือนทำงานได้<br>
-      กรุณาใส่ Webhook URL ของคุณ:
-    </div>
-    <div class="input-group">
-      <label>Discord Webhook URL</label>
-      <input type="url" id="modal-webhook-url" placeholder="https://discord.com/api/webhooks/...">
-    </div>
-    <div style="font-size:12px; color:var(--text3); margin-bottom:16px;">
-      📖 วิธีสร้าง: Discord → ห้อง → ⚙ ตั้งค่า → Integrations → Webhooks → New Webhook → Copy URL
-    </div>
-    <div style="display:flex; gap:10px;">
-      <button class="btn btn-gold btn-full" onclick="saveDiscordFromModal()">💾 บันทึกและใช้งาน</button>
-      <button class="btn btn-sm btn-outline" onclick="document.getElementById('discord-modal').classList.remove('show')">ข้ามก่อน</button>
-    </div>
+<div class="mo" id="modal-day" onclick="if(event.target===this)closeModal('modal-day')">
+  <div class="mbox">
+    <div class="mt" id="mday-t">วันที่</div>
+    <div id="mday-c"></div>
+    <button class="btn bo bf bs" onclick="closeModal('modal-day')" style="margin-top:12px;">ปิด</button>
   </div>
 </div>
 
+<!-- TOAST -->
+<div id="toast"></div>
 
-<!-- ==============================
-     MODAL: Day Detail
-============================== -->
-<div class="modal-overlay" id="day-modal" onclick="if(event.target===this)this.classList.remove('show')">
-  <div class="modal">
-    <div class="modal-title" id="modal-day-title">วันที่ X</div>
-    <div id="modal-day-content"></div>
-    <button class="btn btn-outline btn-full" onclick="document.getElementById('day-modal').classList.remove('show')" style="margin-top:16px;">ปิด</button>
-  </div>
-</div>
-
-
-<!-- ==============================
-     TOAST
-============================== -->
-<div id="toast" style="position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--primary);color:#fff;padding:12px 24px;border-radius:50px;font-size:14px;font-weight:600;z-index:300;display:none;box-shadow:0 4px 20px rgba(0,0,0,0.3);"></div>
-
-
-<!-- ==============================
-     JAVASCRIPT
-============================== -->
 <script>
-/* ========== FIREBASE CONFIG ==========
-   ใส่ค่าของคุณเองด้านล่าง หรือกรอกในหน้าตั้งค่า
-   ========================================== */
-const FIREBASE_CONFIG = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+// =========================================
+// FIREBASE ADMIN CONFIG
+// =========================================
+const FB_CONFIG = {
+  apiKey:"AIzaSyBXiCmGUnw-j5C43vYLW9xJKRGVcEUeY-Y",
+  authDomain:"displine.firebaseapp.com",
+  projectId:"displine",
+  storageBucket:"displine.firebasestorage.app",
+  messagingSenderId:"485672187327",
+  appId:"1:485672187327:web:cfaf98723ca44807ae5d0a"
 };
+let db = null;
+try {
+  if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+  db = firebase.firestore();
+} catch(e) { console.warn('FB init:',e); }
 
-/* ========== SUPABASE CONFIG ==========
-   ใส่ค่าของคุณเองด้านล่าง หรือกรอกในหน้าตั้งค่า
-   ========================================== */
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
-
-/* ========== DISCORD WEBHOOK ==========
-   ใส่ค่าของคุณเองด้านล่าง หรือกรอกในหน้าตั้งค่า
-   ========================================== */
-let DISCORD_WEBHOOK = localStorage.getItem('discord_webhook') || "YOUR_DISCORD_WEBHOOK_URL";
-
-// =============================================
-//   APP STATE
-// =============================================
-let appState = {
-  user: null,
-  currentPlan: null,
-  history: {},
-  streak: 0,
-  selectedIcon: 'tree',
-  msgStyle: 'cheer',
-  notifStyle: 'cheer',
-  activities: [],
-  planDur: 'month',
-  timerInterval: null,
-  timerTotal: 0,
-  timerLeft: 0,
-  checkTimes: [],
-  checksPassed: 0,
-  missionActive: false,
+// =========================================
+// STATE
+// =========================================
+let S = {
+  user:null, plan:null, hist:{}, streak:0,
+  icon:'tree', msgStyle:'cheer', notifStyle:'cheer',
+  acts:[], planDur:'month'
 };
+let tmpActs = [];
+let timerIv = null, timerTotal = 0, timerLeft = 0;
+let checkTimes = [], checksPassed = 0;
+let curActIdx = 0;
+let cdIv = null, chkIv = null;
+let notifTimers = [];
 
-// Load from localStorage
-function loadState() {
-  const saved = localStorage.getItem('bayi_state');
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      Object.assign(appState, parsed);
-    } catch(e) {}
-  }
+function loadS() {
+  const s = localStorage.getItem('bs');
+  if (s) try { Object.assign(S, JSON.parse(s)); } catch(e){}
+}
+function saveS() {
+  const t = {user:S.user,plan:S.plan,hist:S.hist,streak:S.streak,icon:S.icon,msgStyle:S.msgStyle,notifStyle:S.notifStyle,acts:S.acts,planDur:S.planDur};
+  localStorage.setItem('bs', JSON.stringify(t));
+  if (db && S.user) db.collection('users').doc(S.user.username).set({...t,ua:new Date()},{merge:true}).catch(()=>{});
 }
 
-function saveState() {
-  const toSave = {
-    user: appState.user,
-    currentPlan: appState.currentPlan,
-    history: appState.history,
-    streak: appState.streak,
-    selectedIcon: appState.selectedIcon,
-    msgStyle: appState.msgStyle,
-    notifStyle: appState.notifStyle,
-    activities: appState.activities,
-    planDur: appState.planDur,
-  };
-  localStorage.setItem('bayi_state', JSON.stringify(toSave));
+// =========================================
+// PAGE NAV — instant switch
+// =========================================
+let curPage = 'pw';
+function go(id) {
+  if (id === curPage) return;
+  const old = document.getElementById(curPage);
+  const next = document.getElementById(id);
+  if (!next) return;
+  if (old) old.classList.remove('active');
+  next.classList.add('active');
+  curPage = id;
+  // scroll top
+  const pb = next.querySelector('.page-body');
+  if (pb) pb.scrollTop = 0;
+  // page callbacks
+  const cb = {'pm':onMain,'pp':onPlan,'ph':onHist,'pi2':onIconSet,'ps':onSettings,'pms':onMission};
+  if (cb[id]) cb[id]();
 }
 
-// =============================================
-//   PAGE NAVIGATION
-// =============================================
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const target = document.getElementById(id);
-  if (target) {
-    target.classList.add('active');
-    if (id === 'page-main') updateMainPage();
-    if (id === 'page-plan') renderPlanCalendar();
-    if (id === 'page-history') renderHistoryCalendar();
-    if (id === 'page-icon-settings') loadIconSettings();
-  }
+// =========================================
+// AUTH
+// =========================================
+function doReg() {
+  const u=gv('ru'),p=gv('rp'),fn=gv('rfn'),ln=gv('rln'),cl=gv('rcl'),fu=gv('rfu');
+  if (!u||!p||!fn||!ln) { toast('⚠️ กรอกข้อมูลให้ครบ'); return; }
+  if (p.length<6) { toast('⚠️ รหัสผ่านต้องอย่างน้อย 6 ตัว'); return; }
+  const ud={username:u,password:btoa(p),fname:fn,lname:ln,cls:cl,future:fu};
+  localStorage.setItem('bu',JSON.stringify(ud));
+  S.user=ud; saveS();
+  toast('✅ สร้างบัญชีสำเร็จ!'); setTimeout(()=>go('pm'),700);
 }
-
-// =============================================
-//   AUTH
-// =============================================
-function doRegister() {
-  const user = v('reg-user'), pass = v('reg-pass'), fname = v('reg-fname'),
-        lname = v('reg-lname'), cls = v('reg-class'), future = v('reg-future');
-  if (!user || !pass || !fname || !lname) { toast('⚠️ กรุณากรอกข้อมูลให้ครบ'); return; }
-  if (pass.length < 6) { toast('⚠️ รหัสผ่านต้องมีอย่างน้อย 6 ตัว'); return; }
-
-  // Store user in localStorage (demo mode) or Firebase
-  const userData = { username: user, password: btoa(pass), fname, lname, cls, future };
-  localStorage.setItem('bayi_user', JSON.stringify(userData));
-  appState.user = userData;
-  saveState();
-  toast('✅ สร้างบัญชีสำเร็จ! بارك الله');
-  setTimeout(() => showPage('page-main'), 800);
-}
-
 function doLogin() {
-  const user = v('login-user'), pass = v('login-pass');
-  if (!user || !pass) { toast('⚠️ กรุณากรอก Username และรหัสผ่าน'); return; }
-  
-  const saved = localStorage.getItem('bayi_user');
-  if (saved) {
-    const userData = JSON.parse(saved);
-    if (userData.username === user && atob(userData.password) === pass) {
-      appState.user = userData;
-      saveState();
-      toast('🌿 ยินดีต้อนรับ ' + userData.fname + '!');
-      setTimeout(() => showPage('page-main'), 600);
-      return;
+  const u=gv('lu'),p=gv('lp');
+  if (!u||!p) { toast('⚠️ กรอก Username และรหัสผ่าน'); return; }
+  const s=localStorage.getItem('bu');
+  if (s) {
+    const ud=JSON.parse(s);
+    if (ud.username===u && atob(ud.password)===p) {
+      S.user=ud; saveS(); toast('🌿 ยินดีต้อนรับ '+ud.fname+'!');
+      setTimeout(()=>go('pm'),600); return;
     }
   }
   toast('❌ Username หรือรหัสผ่านไม่ถูกต้อง');
 }
-
-function doLogout() {
-  appState.user = null;
-  saveState();
-  toast('👋 ออกจากระบบแล้ว');
-  setTimeout(() => showPage('page-welcome'), 600);
+function doLogout() { S.user=null; saveS(); toast('👋 ออกจากระบบ'); setTimeout(()=>go('pw'),600); }
+function chgPass() {
+  const np=gv('np'),cp=gv('cp');
+  if (!np||!cp) { toast('⚠️ กรอกรหัสผ่าน'); return; }
+  if (np!==cp) { toast('❌ รหัสผ่านไม่ตรงกัน'); return; }
+  if (np.length<6) { toast('⚠️ ต้องอย่างน้อย 6 ตัว'); return; }
+  S.user.password=btoa(np);
+  localStorage.setItem('bu',JSON.stringify(S.user));
+  saveS(); toast('✅ เปลี่ยนรหัสผ่านสำเร็จ');
+  qs('np').value=''; qs('cp').value='';
 }
 
-function changePassword() {
-  const np = v('new-pass'), cp = v('confirm-pass');
-  if (!np || !cp) { toast('⚠️ กรุณากรอกรหัสผ่าน'); return; }
-  if (np !== cp) { toast('❌ รหัสผ่านไม่ตรงกัน'); return; }
-  if (np.length < 6) { toast('⚠️ รหัสผ่านต้องอย่างน้อย 6 ตัว'); return; }
-  if (appState.user) {
-    appState.user.password = btoa(np);
-    localStorage.setItem('bayi_user', JSON.stringify(appState.user));
-    toast('✅ เปลี่ยนรหัสผ่านสำเร็จ');
-    document.getElementById('new-pass').value = '';
-    document.getElementById('confirm-pass').value = '';
-  }
-}
+// =========================================
+// MAIN PAGE
+// =========================================
+function onMain() {
+  if (!S.user) return;
+  const name = S.user.fname+' '+S.user.lname;
+  qs('muser').textContent = name.trim()||S.user.username;
+  qs('pname').textContent = name.trim();
+  qs('pcls').textContent = (S.user.cls||'') + ' — ' + (S.user.future||'');
+  qs('pavt').textContent = (S.user.fname||'B')[0].toUpperCase();
 
-// =============================================
-//   MAIN PAGE UPDATE
-// =============================================
-function updateMainPage() {
-  if (appState.user) {
-    const name = (appState.user.fname || '') + ' ' + (appState.user.lname || '');
-    document.getElementById('main-username').textContent = name.trim() || appState.user.username;
-    document.getElementById('profile-name').textContent = name.trim();
-    document.getElementById('profile-class').textContent = (appState.user.cls || '') + ' — ' + (appState.user.future || '');
-    const initial = (appState.user.fname || 'B')[0].toUpperCase();
-    document.getElementById('profile-avatar').textContent = initial;
-  }
-
-  // Today date
   const now = new Date();
-  const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-  document.getElementById('today-date').textContent = now.getDate() + ' ' + months[now.getMonth()] + ' ' + (now.getFullYear() + 543);
-  document.getElementById('streak-num').textContent = appState.streak;
+  const mths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  qs('mdate').textContent = now.getDate()+' '+mths[now.getMonth()]+' '+(now.getFullYear()+543);
+  qs('mstreak').textContent = S.streak;
 
-  // Update icon display
-  updateIconDisplay();
+  updateIcon();
+  updateGoal();
+  updateStatusMsg();
+  showTodayPreview();
+  scheduleNotifications();
+}
 
-  // Goal progress
-  if (appState.currentPlan) {
-    document.getElementById('goal-display').textContent = '🎯 ' + appState.currentPlan.goal;
-    const done = Object.values(appState.history).filter(d => d.done).length;
-    const total = appState.currentPlan.days || 30;
-    const pct = Math.round((done / total) * 100);
-    document.getElementById('goal-pct').textContent = pct + '%';
-    document.getElementById('goal-bar').style.width = pct + '%';
-    document.getElementById('goal-bar-wrap').style.display = 'block';
+function updateGoal() {
+  if (S.plan) {
+    qs('mgoal').textContent = '🎯 '+S.plan.goal;
+    const done = Object.values(S.hist).filter(d=>d.done).length;
+    const total = S.plan.days||30;
+    const pct = Math.min(100,Math.round(done/total*100));
+    qs('mpct').textContent = pct+'%';
+    qs('mbar').style.width = pct+'%';
+    qs('mbar-wrap').style.display = 'block';
+    const offset = 565 - (565*(done/total));
+    qs('arc').setAttribute('stroke-dashoffset', Math.max(0,offset));
   }
-
-  // Progress arc
-  const done2 = Object.values(appState.history).filter(d => d.done).length;
-  const total2 = (appState.currentPlan && appState.currentPlan.days) || 30;
-  const pct2 = done2 / total2;
-  const offset = 565 - (565 * pct2);
-  document.getElementById('progress-arc').setAttribute('stroke-dashoffset', offset);
-
-  // Status message
-  const msgs = getStatusMessages();
-  const rnd = msgs[Math.floor(Math.random() * msgs.length)];
-  document.getElementById('main-status-msg').innerHTML = rnd;
 }
 
-function getStatusMessages() {
-  const name = appState.user ? appState.user.fname : 'เพื่อน';
-  const style = appState.msgStyle;
-  if (style === 'cheer') return [
-    `🌿 ${name} ทำได้! วันนี้เป็นโอกาสใหม่`,
-    `✨ ความพยายามของ ${name} จะถูกบันทึกไว้`,
-    `🤲 บิสมิลลาห์ แล้วลงมือทำเลย ${name}!`,
-    `🌱 ทุกก้าวเล็กๆ สร้างความยิ่งใหญ่`,
-  ];
-  if (style === 'islamic') return [
-    `📖 อายัตแรกที่ลงมาคือ "اقْرَأْ" = จงอ่าน!\nแล้วทำไม ${name} ไม่อ่านหนังสือ?`,
-    `🕌 الصَّبْرُ مِفْتَاحُ الْفَرَجِ\nความอดทนคือกุญแจสู่ความสำเร็จ ${name}`,
-    `🤲 "إِنَّ مَعَ الْعُسْرِ يُسْرًا"\nแท้จริงหลังความยากมีความง่าย`,
-    `⭐ ท่านนบีบอกว่า การกระทำขึ้นอยู่กับเนียต\n${name} ตั้งเนียตทำวันนี้แล้วยัง?`,
-  ];
-  if (style === 'scold') return [
-    `😤 ${name} ยังไม่เริ่มเลยเหรอ? เวลาไม่รอใคร`,
-    `😒 แผนสวยหรูแต่ไม่ทำก็ไม่มีประโยชน์`,
-    `🙄 แบบนี้จะบรรลุเป้าหมายได้ยังไง ${name}`,
-    `😠 ได้แต่นอนหรือเปล่า? ลุกมาทำซะ!`,
-  ];
-  if (style === 'brutal') return [
-    `💀 ${name} มึงไม่อ่านหนังสือ มึงไม่ประสบความสำเร็จหรอก\nมึงก็แค่มีแผนแต่ไม่มีวินัย ไอโง่`,
-    `🔥 ไอ${name}! นิสัยแบบนี้คงไม่บรรลุเป้าหมายหรอก\nตายไปก็ยังมีแต่ข้อแก้ตัว`,
-    `😡 ${name} เหี้ย! มึงจะรอให้ถึงวันสุดท้ายหรือไง\nแล้วจะมาร้องไห้ทำไม ลงมือซะ!`,
-    `💥 บ้าไหม ${name}? เสียเวลาทำไม เปิดหนังสือซะ!`,
-  ];
-  return [`🌿 มาเริ่มต้นวันนี้กันเถอะ`];
-}
-
-// =============================================
-//   ICON SVGs
-// =============================================
-const ICONS = {
-  tree: {
-    good: `<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg"><rect x="70" y="110" width="20" height="40" fill="#8B6914" rx="4"/><ellipse cx="80" cy="80" rx="50" ry="55" fill="#2d9966"/><ellipse cx="80" cy="60" rx="38" ry="42" fill="#3dba7e"/><ellipse cx="80" cy="44" rx="26" ry="30" fill="#4dd496"/><circle cx="65" cy="72" r="6" fill="#27864e" opacity="0.6"/><circle cx="95" cy="68" r="5" fill="#27864e" opacity="0.6"/></svg>`,
-    bad: `<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg"><rect x="70" y="115" width="20" height="35" fill="#6b5010" rx="4"/><ellipse cx="80" cy="88" rx="42" ry="40" fill="#8B7355"/><ellipse cx="80" cy="72" rx="30" ry="28" fill="#a0856e"/><line x1="55" y1="70" x2="40" y2="90" stroke="#8B7355" stroke-width="3"/><line x1="95" y1="65" x2="115" y2="85" stroke="#8B7355" stroke-width="3"/><text x="80" y="100" text-anchor="middle" font-size="18">🍂</text></svg>`,
-  },
-  house: {
-    good: `<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg"><rect x="30" y="80" width="100" height="70" fill="#c8962a" rx="4"/><polygon points="20,82 80,30 140,82" fill="#8B6914"/><rect x="65" y="110" width="30" height="40" fill="#7a5010"/><rect x="35" y="88" width="25" height="22" fill="#87ceeb" rx="2"/><rect x="100" y="88" width="25" height="22" fill="#87ceeb" rx="2"/><rect x="35" y="88" width="1" height="22" fill="#fff" opacity=".5" transform="translate(12)"/></svg>`,
-    bad: `<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg"><rect x="30" y="80" width="100" height="70" fill="#888" rx="4"/><polygon points="20,82 80,30 140,82" fill="#666"/><rect x="65" y="110" width="30" height="40" fill="#555"/><line x1="30" y1="80" x2="50" y2="120" stroke="#e74c3c" stroke-width="3"/><line x1="130" y1="80" x2="110" y2="120" stroke="#e74c3c" stroke-width="3"/><text x="80" y="100" text-anchor="middle" font-size="20">💥</text></svg>`,
-  },
-  city: {
-    good: `<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="80" width="28" height="70" fill="#1a6b4a" rx="2"/><rect x="46" y="50" width="38" height="100" fill="#2d9966" rx="2"/><rect x="92" y="64" width="30" height="86" fill="#1a6b4a" rx="2"/><rect x="125" y="88" width="22" height="62" fill="#0f4a33" rx="2"/><rect x="14" y="84" width="6" height="8" fill="#87ceeb" rx="1" opacity=".8"/><rect x="14" y="96" width="6" height="8" fill="#87ceeb" rx="1" opacity=".8"/><rect x="50" y="56" width="8" height="10" fill="#87ceeb" rx="1" opacity=".8"/><rect x="62" y="56" width="8" height="10" fill="#87ceeb" rx="1" opacity=".8"/><rect x="50" y="70" width="8" height="10" fill="#87ceeb" rx="1" opacity=".8"/></svg>`,
-    bad: `<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="80" width="28" height="70" fill="#888" rx="2" transform="rotate(-5 24 115)"/><rect x="46" y="60" width="38" height="90" fill="#999" rx="2" transform="rotate(3 65 105)"/><rect x="92" y="64" width="30" height="86" fill="#888" rx="2"/><text x="45" y="80" font-size="22">💥</text><text x="80" y="60" font-size="18">🔥</text></svg>`,
-  },
-  car: {
-    good: `<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg"><rect x="15" y="80" width="130" height="48" fill="#2d9966" rx="12"/><polygon points="30,80 45,52 115,52 130,80" fill="#1a6b4a"/><circle cx="45" cy="128" r="16" fill="#333"/><circle cx="45" cy="128" r="8" fill="#888"/><circle cx="115" cy="128" r="16" fill="#333"/><circle cx="115" cy="128" r="8" fill="#888"/><rect x="48" y="56" width="22" height="20" fill="#87ceeb" rx="3" opacity=".9"/><rect x="74" y="56" width="22" height="20" fill="#87ceeb" rx="3" opacity=".9"/><rect x="120" y="90" width="12" height="8" fill="#ffeb3b" rx="2"/><rect x="28" y="90" width="12" height="8" fill="#ff5722" rx="2"/></svg>`,
-    bad: `<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg"><rect x="15" y="85" width="130" height="48" fill="#888" rx="8" transform="rotate(3 80 109)"/><polygon points="30,85 45,57 115,57 130,85" fill="#666"/><circle cx="45" cy="128" r="14" fill="#555"/><circle cx="115" cy="128" r="14" fill="#555"/><text x="60" y="80" font-size="24">💥</text><line x1="15" y1="85" x2="35" y2="120" stroke="#e74c3c" stroke-width="4"/></svg>`,
-  },
-};
-
-function updateIconDisplay() {
-  const key = appState.selectedIcon || 'tree';
-  const done = Object.values(appState.history).filter(d => d.done).length;
-  const todayKey = getTodayKey();
-  const todayData = appState.history[todayKey];
-  const isGood = todayData && todayData.done;
-  const svg = ICONS[key] ? (isGood ? ICONS[key].good : ICONS[key].good) : ICONS['tree'].good;
-  document.getElementById('main-icon-display').innerHTML = svg;
-}
-
-// =============================================
-//   MISSION / TIMER
-// =============================================
-function goMission() {
-  showPage('page-mission');
-  loadTodayMission();
-}
-
-function loadTodayMission() {
-  const acts = appState.activities;
-  const container = document.getElementById('mission-today-plans');
-  if (!acts || acts.length === 0) {
-    container.innerHTML = '<div style="color:var(--text3);font-size:14px;padding:12px 0;">ยังไม่มีแผนวันนี้ กรุณาวางแผนก่อน</div>';
-    return;
-  }
-  container.innerHTML = acts.map((a, i) => `
-    <div class="plan-row">
-      <div class="row-between">
-        <span style="font-weight:600;">📌 ${a.name}</span>
-        <span class="tag tag-gold">${a.start} - ${a.end}</span>
+function showTodayPreview() {
+  const acts = S.acts;
+  const wrap = qs('today-plan-preview');
+  const list = qs('today-plan-list');
+  if (!acts||acts.length===0) { wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  list.innerHTML = acts.map(a=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--b);">
+      <div>
+        <div style="font-size:13px;font-weight:600;">📌 ${a.name}</div>
+        <div style="font-size:11px;color:var(--t3);">${a.goal||''}</div>
       </div>
-      <div style="font-size:13px;color:var(--text3);margin-top:6px;">เป้าหมาย: ${a.goal} | ${a.minutes} นาที</div>
+      <span class="tag tgo" style="font-size:10px;">${a.start}–${a.end}</span>
     </div>
   `).join('');
 }
 
-function startCountdown() {
-  showPage('page-countdown');
-  let t = 60;
-  document.getElementById('countdown-num').textContent = t;
-  const iv = setInterval(() => {
-    t--;
-    document.getElementById('countdown-num').textContent = t;
-    if (t <= 0) { clearInterval(iv); startTimer(); }
-  }, 1000);
+function updateStatusMsg() {
+  const msgs = getMsgs();
+  qs('msmsg').textContent = msgs[Math.floor(Math.random()*msgs.length)];
 }
 
-function startTimer() {
-  const acts = appState.activities;
-  const totalMin = acts && acts.length > 0 ? parseInt(acts[0].minutes) || 60 : 60;
-  appState.timerTotal = totalMin * 60;
-  appState.timerLeft = appState.timerTotal;
-  appState.checkTimes = [];
-  appState.checksPassed = 0;
-
-  // Random 3 check times
-  const intervals = [0.25, 0.5, 0.75];
-  appState.checkTimes = intervals.map(f => Math.floor(appState.timerTotal * f));
-
-  document.getElementById('timer-task-name').textContent = acts && acts[0] ? acts[0].name : 'ภารกิจ';
-  showPage('page-timer');
-
-  clearInterval(appState.timerInterval);
-  appState.timerInterval = setInterval(() => {
-    appState.timerLeft--;
-    updateTimerDisplay();
-
-    // Check prompts
-    if (appState.checkTimes.includes(appState.timerLeft) && appState.checksPassed < 3) {
-      showCheckPrompt();
-    }
-
-    if (appState.timerLeft <= 0) {
-      clearInterval(appState.timerInterval);
-      document.getElementById('upload-area').style.display = 'block';
-      document.getElementById('finish-btn').style.display = 'block';
-      toast('🎉 หมดเวลา! กดเสร็จภารกิจ');
-    }
-  }, 1000);
-  appState.missionActive = true;
+function getMsgs() {
+  const n = S.user?S.user.fname:'เพื่อน';
+  const s = S.msgStyle;
+  if (s==='cheer') return [`🌿 ${n} ทำได้! วันนี้เป็นโอกาสใหม่`,`✨ ความพยายามของ ${n} จะถูกตอบแทน`,`🤲 บิสมิลลาห์ แล้วลงมือเลย!`,`🌱 ทุกก้าวเล็กๆ สร้างความยิ่งใหญ่`];
+  if (s==='islamic') return [`📖 اقْرَأْ = จงอ่าน!\nแล้วทำไม ${n} ไม่อ่านหนังสือ?`,`🕌 الصَّبْرُ مِفْتَاحُ الْفَرَجِ\nความอดทนคือกุญแจ ${n}`,`🤲 إِنَّ مَعَ الْعُسْرِ يُسْرًا\nหลังความยากมีความง่าย`,`⭐ ตั้งเนียตทำวันนี้แล้วยัง ${n}?`];
+  if (s==='scold') return [`😤 ${n} ยังไม่เริ่มเลยเหรอ?`,`😒 แผนสวยแต่ไม่ทำก็ไร้ค่า`,`🙄 แบบนี้จะบรรลุได้ยังไง ${n}`,`😠 ลุกมาทำซะ!`];
+  if (s==='brutal') return [`💀 ${n} มึงไม่ทำ มึงไม่ประสบความสำเร็จ`,`🔥 ไอ${n}! นิสัยนี้ = ชีวิตล้มเหลว`,`😡 ${n} เหี้ย! หยุดรอ ลงมือซะ!`,`💥 บ้าไหม ${n}? เปิดหนังสือซะ!`];
+  return [`🌿 มาเริ่มต้นวันนี้กัน`];
 }
 
-function updateTimerDisplay() {
-  const m = Math.floor(appState.timerLeft / 60);
-  const s = appState.timerLeft % 60;
-  document.getElementById('timer-display').textContent = 
-    String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-  
-  const offset = 553 - (553 * (1 - appState.timerLeft / appState.timerTotal));
-  document.getElementById('timer-arc').setAttribute('stroke-dashoffset', offset);
-
-  // Show finish button in last minute
-  if (appState.timerLeft < 60) {
-    document.getElementById('upload-area').style.display = 'block';
-    document.getElementById('finish-btn').style.display = 'block';
+// =========================================
+// ICONS
+// =========================================
+const ICONS = {
+  tree:{
+    good:`<svg viewBox="0 0 160 160"><rect x="70" y="110" width="20" height="40" fill="#8B6914" rx="4"/><ellipse cx="80" cy="80" rx="50" ry="55" fill="#2d9966"/><ellipse cx="80" cy="60" rx="38" ry="42" fill="#3dba7e"/><ellipse cx="80" cy="44" rx="26" ry="30" fill="#4dd496"/><circle cx="65" cy="72" r="6" fill="#27864e" opacity=".6"/><circle cx="95" cy="68" r="5" fill="#27864e" opacity=".6"/></svg>`,
+    bad:`<svg viewBox="0 0 160 160"><rect x="70" y="115" width="20" height="35" fill="#6b5010" rx="4"/><ellipse cx="80" cy="88" rx="42" ry="40" fill="#8B7355"/><ellipse cx="80" cy="72" rx="30" ry="28" fill="#a0856e"/><text x="80" y="102" text-anchor="middle" font-size="20">🍂</text></svg>`
+  },
+  house:{
+    good:`<svg viewBox="0 0 160 160"><rect x="30" y="80" width="100" height="70" fill="#c8962a" rx="4"/><polygon points="20,82 80,30 140,82" fill="#8B6914"/><rect x="65" y="110" width="30" height="40" fill="#7a5010"/><rect x="35" y="88" width="25" height="22" fill="#87ceeb" rx="2"/><rect x="100" y="88" width="25" height="22" fill="#87ceeb" rx="2"/></svg>`,
+    bad:`<svg viewBox="0 0 160 160"><rect x="30" y="80" width="100" height="70" fill="#888" rx="4"/><polygon points="20,82 80,30 140,82" fill="#666"/><rect x="65" y="110" width="30" height="40" fill="#555"/><text x="80" y="105" text-anchor="middle" font-size="22">💥</text></svg>`
+  },
+  city:{
+    good:`<svg viewBox="0 0 160 160"><rect x="10" y="80" width="28" height="70" fill="#1a6b4a" rx="2"/><rect x="46" y="50" width="38" height="100" fill="#2d9966" rx="2"/><rect x="92" y="64" width="30" height="86" fill="#1a6b4a" rx="2"/><rect x="125" y="88" width="22" height="62" fill="#0f4a33" rx="2"/><rect x="50" y="56" width="8" height="10" fill="#87ceeb" rx="1" opacity=".8"/><rect x="62" y="56" width="8" height="10" fill="#87ceeb" rx="1" opacity=".8"/></svg>`,
+    bad:`<svg viewBox="0 0 160 160"><rect x="10" y="80" width="28" height="70" fill="#888" rx="2" transform="rotate(-5 24 115)"/><rect x="46" y="60" width="38" height="90" fill="#999" rx="2" transform="rotate(3 65 105)"/><text x="55" y="82" font-size="22">💥</text><text x="80" y="62" font-size="18">🔥</text></svg>`
+  },
+  car:{
+    good:`<svg viewBox="0 0 160 160"><rect x="15" y="80" width="130" height="48" fill="#2d9966" rx="12"/><polygon points="30,80 45,52 115,52 130,80" fill="#1a6b4a"/><circle cx="45" cy="128" r="16" fill="#333"/><circle cx="45" cy="128" r="8" fill="#888"/><circle cx="115" cy="128" r="16" fill="#333"/><circle cx="115" cy="128" r="8" fill="#888"/><rect x="48" y="56" width="22" height="20" fill="#87ceeb" rx="3" opacity=".9"/><rect x="74" y="56" width="22" height="20" fill="#87ceeb" rx="3" opacity=".9"/></svg>`,
+    bad:`<svg viewBox="0 0 160 160"><rect x="15" y="85" width="130" height="48" fill="#888" rx="8" transform="rotate(3 80 109)"/><polygon points="30,85 45,57 115,57 130,85" fill="#666"/><circle cx="45" cy="128" r="14" fill="#555"/><circle cx="115" cy="128" r="14" fill="#555"/><text x="60" y="80" font-size="24">💥</text></svg>`
   }
+};
+
+function updateIcon() {
+  const k = S.icon||'tree';
+  const td = S.hist[todayKey()];
+  const ok = td&&td.done;
+  const svg = ICONS[k]?ICONS[k][ok?'good':'bad']:ICONS.tree.good;
+  qs('micon').innerHTML = svg;
 }
 
-let checkTimer = null;
-function showCheckPrompt() {
-  document.getElementById('check-prompt-area').style.display = 'block';
-  let t = 30;
-  document.getElementById('check-countdown').textContent = t;
-  checkTimer = setInterval(() => {
-    t--;
-    document.getElementById('check-countdown').textContent = t;
-    if (t <= 0) {
-      clearInterval(checkTimer);
-      document.getElementById('check-prompt-area').style.display = 'none';
-      toast('⚠️ ไม่ได้กดยืนยัน! บันทึกว่าอาจออกจากหน้า');
-    }
-  }, 1000);
+// =========================================
+// MISSION
+// =========================================
+function goMission() { go('pms'); }
+
+function onMission() {
+  const acts = S.acts;
+  const plans = qs('mis-plans');
+  const noPlan = qs('mis-noPlan');
+  const btnStart = qs('mis-start-btn');
+  if (!acts||acts.length===0) {
+    plans.innerHTML=''; noPlan.style.display='block'; btnStart.style.display='none'; return;
+  }
+  noPlan.style.display='none'; btnStart.style.display='block';
+  plans.innerHTML = acts.map((a,i)=>`
+    <div class="prow">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-weight:700;font-size:13px;color:var(--p);">📌 ${a.name}</span>
+        <span class="tag tgo" style="font-size:10px;">${a.start} – ${a.end}</span>
+      </div>
+      <div style="font-size:11px;color:var(--t3);margin-top:4px;">⏱ ${a.minutes} นาที ${a.goal?'| 🎯 '+a.goal:''}</div>
+    </div>
+  `).join('');
 }
 
-function confirmStillHere() {
-  clearInterval(checkTimer);
-  appState.checksPassed++;
-  document.getElementById('check-prompt-area').style.display = 'none';
-  toast('✅ ยืนยันแล้ว! ต่อเลย');
+// COUNTDOWN
+function startCountdown() {
+  const acts = S.acts;
+  if (!acts||acts.length===0) { toast('⚠️ กรุณาวางแผนก่อน'); return; }
+  curActIdx = 0;
+  const a = acts[0];
+  qs('cd-info').innerHTML = `<b>กิจกรรมที่ 1/${acts.length}: ${a.name}</b><br>🕐 ${a.start} – ${a.end} | ⏱ ${a.minutes} นาที<br>${a.goal?'🎯 '+a.goal:''}`;
+  let t = 60;
+  qs('cd-num').textContent = t;
+  clearInterval(cdIv);
+  cdIv = setInterval(()=>{ t--; qs('cd-num').textContent=t; if(t<=0){clearInterval(cdIv);startActTimer(0);} },1000);
+  go('pcd');
+}
+function cancelCD() { clearInterval(cdIv); go('pms'); }
+function skipCD() { clearInterval(cdIv); startActTimer(curActIdx); }
+
+// TIMER per activity
+function startActTimer(idx) {
+  const acts = S.acts;
+  if (!acts||idx>=acts.length) { finishMission(); return; }
+  curActIdx = idx;
+  const a = acts[idx];
+  const totalMin = parseInt(a.minutes)||30;
+  timerTotal = totalMin*60; timerLeft = timerTotal;
+  checksPassed = 0;
+
+  // check times at 25%, 50%, 75%
+  checkTimes = [.25,.5,.75].map(f=>Math.floor(timerTotal*f));
+
+  qs('tm-name').textContent = a.name;
+  qs('tm-time').textContent = a.start+' – '+a.end;
+  qs('tm-goal').textContent = a.goal?'🎯 '+a.goal:'';
+  qs('tm-counter').textContent = 'กิจกรรม '+(idx+1)+'/'+acts.length;
+  qs('tupload').style.display='none'; qs('tfinish').style.display='none';
+  qs('tnext').style.display='none'; qs('tchk').style.display='none';
+
+  renderQueue(idx);
+  go('ptm');
+
+  clearInterval(timerIv);
+  timerIv = setInterval(()=>{
+    timerLeft--;
+    updateTimer();
+    if (checkTimes.includes(timerLeft)&&checksPassed<3) showChk();
+    if (timerLeft<=0) { clearInterval(timerIv); onActEnd(idx); }
+  },1000);
 }
 
+function renderQueue(cur) {
+  const acts = S.acts;
+  qs('tqueue').innerHTML = `<div style="font-size:10px;color:var(--t3);margin-bottom:5px;">รายการ:</div>`+
+  acts.map((a,i)=>`
+    <div class="aitem ${i===cur?'cur':''} ${i<cur?'done2':''}">
+      <span style="font-size:16px;">${i<cur?'✅':i===cur?'▶️':'⏳'}</span>
+      <div style="flex:1;">
+        <div style="font-size:12px;font-weight:600;color:${i===cur?'var(--p)':'var(--t2)'};">${a.name}</div>
+        <div style="font-size:10px;color:var(--t3);">${a.start}–${a.end} | ${a.minutes} นาที</div>
+      </div>
+      ${i===cur?'<span class="tag tg" style="font-size:10px;">กำลังทำ</span>':''}
+    </div>
+  `).join('');
+}
+
+function updateTimer() {
+  const m=Math.floor(timerLeft/60), s=timerLeft%60;
+  qs('tdisplay').textContent = String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  const off = 553-(553*(1-timerLeft/timerTotal));
+  qs('tarc').setAttribute('stroke-dashoffset',Math.max(0,off));
+}
+
+function onActEnd(idx) {
+  const last = idx>=S.acts.length-1;
+  if (last) { qs('tupload').style.display='block'; qs('tfinish').style.display='block'; toast('🎉 ครบทุกกิจกรรม!'); }
+  else { qs('tnext').style.display='block'; toast('✅ กิจกรรมนี้เสร็จ! กดถัดไป'); }
+}
+
+function nextAct() {
+  qs('tnext').style.display='none';
+  clearInterval(chkIv); qs('tchk').style.display='none';
+  startActTimer(curActIdx+1);
+}
+
+function showChk() {
+  qs('tchk').style.display='block';
+  let t=30; qs('chk-cd').textContent=t;
+  clearInterval(chkIv);
+  chkIv=setInterval(()=>{t--;qs('chk-cd').textContent=t;if(t<=0){clearInterval(chkIv);qs('tchk').style.display='none';toast('⚠️ ไม่ได้กดยืนยัน!');}},1000);
+}
+function stillHere() { clearInterval(chkIv); checksPassed++; qs('tchk').style.display='none'; toast('✅ ยืนยันแล้ว! ทำต่อเลย'); }
 function confirmQuit() {
-  if (confirm('หยุดภารกิจ? ความคืบหน้าจะไม่ถูกบันทึก')) {
-    clearInterval(appState.timerInterval);
-    appState.missionActive = false;
-    showPage('page-main');
+  if (confirm('หยุดภารกิจ? ไม่บันทึก')) {
+    clearInterval(timerIv); clearInterval(chkIv); go('pm');
   }
 }
 
 function finishMission() {
-  clearInterval(appState.timerInterval);
-  appState.missionActive = false;
-  
-  const todayKey = getTodayKey();
-  appState.history[todayKey] = {
-    done: true,
-    date: todayKey,
-    summary: document.getElementById('summary-text').value,
-    summaryUrl: document.getElementById('summary-url').value,
-    activities: appState.activities,
-  };
-  appState.streak++;
-  saveState();
-
-  // Send Discord notification
-  const name = appState.user ? appState.user.fname : 'ผู้ใช้';
-  sendDiscordNotif(`✅ ${name} เสร็จภารกิจแล้ว! الحمد لله | ${getTodayThaiDate()}`);
-
-  showPage('page-complete');
-  updateMainPage();
+  clearInterval(timerIv); clearInterval(chkIv);
+  const tk = todayKey();
+  S.hist[tk] = { done:true, date:tk, summary:gv('sum-txt'), summaryUrl:gv('sum-url'), acts:S.acts, at:new Date().toISOString() };
+  S.streak++;
+  saveS();
+  const n = S.user?S.user.fname:'ผู้ใช้';
+  sendDC(`✅ ${n} เสร็จภารกิจแล้ว! الحمد لله | ${thaiDate()}`);
+  const k = S.icon||'tree';
+  qs('ok-icon').textContent = k==='tree'?'🌳':k==='house'?'🏠':k==='city'?'🏙':'🚗';
+  go('pok');
+  updateIcon();
 }
 
-// =============================================
-//   PLAN
-// =============================================
-let tempActivities = [];
-
-function setPlanDur(dur, btn) {
-  appState.planDur = dur;
-  ['dur-week','dur-month','dur-year'].forEach(id => {
-    document.getElementById(id).className = 'btn btn-sm btn-outline';
-  });
-  btn.className = 'btn btn-sm btn-primary';
+// =========================================
+// PLAN
+// =========================================
+function onPlan() {
+  tmpActs = [...S.acts];
+  renderAList();
+  if (S.plan) qs('pg').value = S.plan.goal||'';
+  renderCal('pcal',false,true);
 }
 
-function addActivity() {
-  const name = v('act-name'), start = v('act-start'), end = v('act-end'),
-        goal = v('act-goal'), minutes = v('act-minutes');
-  if (!name) { toast('⚠️ ใส่ชื่อกิจกรรม'); return; }
-  const act = { name, start, end, goal, minutes };
-  tempActivities.push(act);
-  renderActivitiesList();
+function setDur(d,btn) {
+  S.planDur = d;
+  ['dw','dm','dy'].forEach(id=>{ qs(id).className='btn bo bs'; qs(id).style.flex='1'; qs(id).style.fontSize='11px'; });
+  btn.className='btn bp bs'; btn.style.flex='1'; btn.style.fontSize='11px';
 }
 
-function renderActivitiesList() {
-  document.getElementById('activities-list').innerHTML = tempActivities.map((a, i) => `
-    <div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg3);border-radius:8px;margin-bottom:6px;">
-      <span style="flex:1;font-size:13px;">📌 <b>${a.name}</b> ${a.start}-${a.end} (${a.minutes}น.)</span>
-      <button onclick="tempActivities.splice(${i},1);renderActivitiesList();" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;">🗑</button>
+function addAct() {
+  const n=gv('an'),s=gv('as'),e=gv('ae'),g=gv('ag'),m=gv('am');
+  if(!n){toast('⚠️ ใส่ชื่อกิจกรรม');return;}
+  tmpActs.push({name:n,start:s,end:e,goal:g,minutes:m||'60'});
+  renderAList();
+  qs('an').value=''; qs('ag').value='';
+}
+
+function renderAList() {
+  const el=qs('alist');
+  if(!el) return;
+  if(!tmpActs.length){el.innerHTML='<div style="font-size:11px;color:var(--t3);text-align:center;padding:7px;">ยังไม่มีกิจกรรม</div>';return;}
+  el.innerHTML=tmpActs.map((a,i)=>`
+    <div style="display:flex;align-items:center;gap:7px;padding:8px 10px;background:var(--bg3);border-radius:9px;margin-bottom:6px;">
+      <div style="flex:1;">
+        <div style="font-size:12px;font-weight:600;">📌 ${a.name}</div>
+        <div style="font-size:10px;color:var(--t3);">${a.start}–${a.end} | ${a.minutes}น. ${a.goal?'| '+a.goal:''}</div>
+      </div>
+      <button onclick="tmpActs.splice(${i},1);renderAList();" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:15px;flex-shrink:0;">🗑</button>
     </div>
   `).join('');
 }
 
 function savePlan() {
-  const goal = v('plan-goal');
-  if (!goal) { toast('⚠️ ใส่เป้าหมายก่อน'); return; }
-  const days = appState.planDur === 'week' ? 7 : appState.planDur === 'year' ? 365 : 30;
-  appState.currentPlan = { goal, dur: appState.planDur, days, created: new Date().toISOString() };
-  appState.activities = tempActivities.length ? tempActivities : appState.activities;
-  saveState();
-  toast('✅ บันทึกแผนสำเร็จ! الحمد لله');
-  setTimeout(() => showPage('page-main'), 600);
+  const g=gv('pg');
+  if(!g){toast('⚠️ ใส่เป้าหมาย');return;}
+  if(!tmpActs.length){toast('⚠️ เพิ่มกิจกรรมอย่างน้อย 1 รายการ');return;}
+  const days=S.planDur==='week'?7:S.planDur==='year'?365:30;
+  S.plan={goal:g,dur:S.planDur,days,created:new Date().toISOString()};
+  S.acts=[...tmpActs];
+  saveS();
+  scheduleNotifications(); // re-schedule after plan save
+  toast('✅ บันทึกแผนสำเร็จ!'); setTimeout(()=>go('pm'),600);
 }
 
-// =============================================
-//   CALENDAR
-// =============================================
-function getTodayKey() {
-  const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-}
+// =========================================
+// CALENDAR
+// =========================================
+function onHist() { renderCal('hcal',true,false); }
 
-function getTodayThaiDate() {
-  const now = new Date();
-  const months = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-  return now.getDate() + ' ' + months[now.getMonth()] + ' พ.ศ.' + (now.getFullYear()+543);
-}
-
-function renderCalendar(containerId, clickable, highlightPlan) {
-  const now = new Date();
-  const year = now.getFullYear(), month = now.getMonth();
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month+1, 0).getDate();
-  const days = ['อา','จ','อ','พ','พฤ','ศ','ส'];
-  const monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-
-  let html = `<div style="font-weight:700;font-size:15px;margin-bottom:12px;color:var(--primary);">${monthNames[month]} ${year+543}</div>`;
-  html += `<div class="cal-grid">`;
-  days.forEach(d => html += `<div class="cal-head">${d}</div>`);
-  for (let i=0;i<firstDay;i++) html += `<div></div>`;
-  for (let d=1;d<=daysInMonth;d++) {
-    const key = year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-    const data = appState.history[key];
-    const isToday = d === now.getDate();
-    let cls = 'cal-day';
-    if (isToday) cls += ' today';
-    if (data && data.done) cls += ' done';
-    else if (highlightPlan && appState.activities && appState.activities.length) cls += ' has-plan';
-    const onclick = clickable ? `onclick="showDayDetail('${key}')"` : '';
-    html += `<div class="${cls}" ${onclick}>${d}${data && data.done ? '<div class="dot green"></div>' : ''}</div>`;
+function renderCal(cid,click,hiPlan) {
+  const el=qs(cid); if(!el) return;
+  const now=new Date(), y=now.getFullYear(), mo=now.getMonth();
+  const fd=new Date(y,mo,1).getDay(), dim=new Date(y,mo+1,0).getDate();
+  const days=['อา','จ','อ','พ','พฤ','ศ','ส'];
+  const mns=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  let h=`<div style="font-weight:700;font-size:13px;margin-bottom:8px;color:var(--p);">${mns[mo]} ${y+543}</div><div class="cal-grid">`;
+  days.forEach(d=>h+=`<div class="ch">${d}</div>`);
+  for(let i=0;i<fd;i++) h+=`<div></div>`;
+  for(let d=1;d<=dim;d++){
+    const k=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const dat=S.hist[k], isT=d===now.getDate();
+    let cls='cd';
+    if(isT) cls+=' today';
+    if(dat&&dat.done) cls+=' done';
+    else if(hiPlan&&S.acts&&S.acts.length) cls+=' hasp';
+    const oc=click?`onclick="showDay('${k}')"`:'';
+    h+=`<div class="${cls}" ${oc}>${d}${dat&&dat.done?'<div class="dot g"></div>':''}</div>`;
   }
-  html += `</div>`;
-  document.getElementById(containerId).innerHTML = html;
+  h+=`</div>`;
+  el.innerHTML=h;
 }
 
-function renderPlanCalendar() { renderCalendar('plan-calendar', false, true); }
-function renderHistoryCalendar() { renderCalendar('history-calendar', true, false); }
-
-function showDayDetail(key) {
-  const data = appState.history[key];
-  document.getElementById('modal-day-title').textContent = '📅 ' + key;
-  if (!data) {
-    document.getElementById('modal-day-content').innerHTML = '<div style="color:var(--text3);">ไม่มีข้อมูลวันนี้</div>';
-  } else {
-    document.getElementById('modal-day-content').innerHTML = `
-      <div class="tag ${data.done ? 'tag-green' : 'tag-red'}" style="margin-bottom:12px;">${data.done ? '✅ ทำสำเร็จ' : '❌ ไม่ได้ทำ'}</div>
-      ${data.summary ? `<p style="font-size:14px;color:var(--text2);">📝 ${data.summary}</p>` : ''}
-      ${data.summaryUrl ? `<a href="${data.summaryUrl}" target="_blank" style="color:var(--primary);font-size:13px;">🔗 ดูรูปภาพสรุป</a>` : ''}
+function showDay(k) {
+  const d=S.hist[k];
+  qs('mday-t').textContent='📅 '+k;
+  if(!d){qs('mday-c').innerHTML='<div style="font-size:12px;color:var(--t3);">ไม่มีข้อมูล</div>';}
+  else {
+    const a=d.acts||[];
+    qs('mday-c').innerHTML=`
+      <div class="tag ${d.done?'tg':'tr'}" style="margin-bottom:9px;">${d.done?'✅ ทำสำเร็จ':'❌ ไม่ได้ทำ'}</div>
+      ${a.length?`<div style="font-size:11px;color:var(--t3);margin-bottom:7px;">กิจกรรม: ${a.map(x=>x.name).join(', ')}</div>`:''}
+      ${d.summary?`<p style="font-size:12px;color:var(--t2);margin-bottom:5px;">📝 ${d.summary}</p>`:''}
+      ${d.summaryUrl?`<a href="${d.summaryUrl}" target="_blank" style="color:var(--p);font-size:11px;">🔗 ดูรูปภาพสรุป</a>`:''}
     `;
   }
-  document.getElementById('day-modal').classList.add('show');
+  openModal('modal-day');
 }
 
-// =============================================
-//   ICON SETTINGS
-// =============================================
-function selectIcon(name, el) {
-  appState.selectedIcon = name;
-  document.querySelectorAll('.icon-choice').forEach(ic => ic.classList.remove('selected'));
-  el.classList.add('selected');
+// =========================================
+// ICON SETTINGS
+// =========================================
+function onIconSet() {
+  ['tree','house','city','car'].forEach(n=>{ const e=qs('ic-'+n); if(e) e.classList.toggle('sel',S.icon===n); });
 }
+function selIcon(n,el) { S.icon=n; document.querySelectorAll('.ic').forEach(e=>e.classList.remove('sel')); el.classList.add('sel'); }
 
-const MSG_PREVIEWS = {
-  cheer: (n) => `🤲 ${n} ทำได้แน่นอน! ทุกความพยายามจะถูกตอบแทน\nوَأَن لَّيْسَ لِلْإِنسَانِ إِلَّا مَا سَعَىٰ\n"มนุษย์จะไม่ได้รับสิ่งใดนอกจากสิ่งที่เขาได้พยายาม"`,
-  islamic: (n) => `📖 รู้ไหม ${n} อายัตแรกที่ลงมาคือ اقْرَأْ หมายถึง "จงอ่าน"\nแล้วทำไม ${n} ยังไม่อ่านหนังสืออยู่? | ${getTodayThaiDate()}`,
-  scold: (n) => `😤 ${n} ยังไม่เริ่มอีกเหรอ? แบบนี้คงไม่บรรลุเป้าหมายหรอก\nมีแผนแต่ไม่มีวินัย | ${getTodayThaiDate()}`,
-  brutal: (n) => `💀 ${n} มึงไม่อ่านหนังสือ มึงไม่ประสบความสำเร็จหรอก\nมึงก็แค่มีแผนแต่ไม่มีวินัย ไอโง่ | ${getTodayThaiDate()}`,
+const MPREV = {
+  cheer:(n)=>`🤲 ${n} ทำได้! ทุกความพยายามจะถูกตอบแทน\nوَأَن لَّيْسَ لِلْإِنسَانِ إِلَّا مَا سَعَىٰ`,
+  islamic:(n)=>`📖 อายัตแรก اقْرَأْ = "จงอ่าน"\nแล้วทำไม ${n} ยังไม่อ่านหนังสือ? | ${thaiDate()}`,
+  scold:(n)=>`😤 ${n} ยังไม่เริ่มอีกเหรอ? แบบนี้ไม่บรรลุเป้าหมายหรอก | ${thaiDate()}`,
+  brutal:(n)=>`💀 ${n} มึงไม่อ่านหนังสือ มึงไม่ประสบความสำเร็จ\nมึงแค่มีแผนแต่ไม่มีวินัย ไอโง่ | ${thaiDate()}`
 };
 
-function setMsgStyle(style, btn) {
-  appState.msgStyle = style;
-  const name = appState.user ? appState.user.fname : 'บาฆอรี';
-  document.getElementById('msg-preview').textContent = MSG_PREVIEWS[style](name);
-  document.querySelectorAll('[id^="msg-"]').forEach(b => b.className = 'btn btn-outline btn-full');
-  btn.className = 'btn btn-primary btn-full';
+function setMsg(s,btn) {
+  S.msgStyle=s;
+  const n=S.user?S.user.fname:'ผู้ใช้';
+  qs('msg-prev').textContent=MPREV[s](n);
+  document.querySelectorAll('[id^="ms-"]').forEach(b=>{b.className='btn bo bf bs';});
+  btn.className='btn bp bf bs';
+}
+function setNotif(s,btn) {
+  S.notifStyle=s;
+  const n=S.user?S.user.fname:'ผู้ใช้';
+  qs('notif-prev').textContent=MPREV[s](n);
+  document.querySelectorAll('[id^="ns-"]').forEach(b=>{b.className='btn bo bf bs';});
+  btn.className='btn bp bf bs';
+}
+function saveIconSet() { saveS(); toast('✅ บันทึกการตั้งค่าแล้ว'); }
+
+// =========================================
+// SETTINGS PAGE
+// =========================================
+function onSettings() {
+  const wh=localStorage.getItem('wh');
+  if (wh) { const e=qs('whu'); if(e) e.value=wh; }
+}
+function saveWH() {
+  const u=gv('whu'); if(!u){toast('⚠️ ใส่ Webhook URL');return;}
+  localStorage.setItem('wh',u); toast('✅ บันทึก Webhook แล้ว');
+  qs('notif-badge').style.display='none';
+}
+async function testWH() {
+  const n=S.user?S.user.fname:'ผู้ใช้';
+  const ok=await sendDC('🧪 ทดสอบ: '+MPREV[S.notifStyle||'cheer'](n));
+  toast(ok?'✅ ส่ง Discord สำเร็จ!':'❌ ส่งไม่สำเร็จ ตรวจ URL');
+}
+async function sendDC(msg) {
+  const url=localStorage.getItem('wh');
+  if(!url) return false;
+  try { const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:msg})}); return r.ok; }
+  catch(e){ return false; }
 }
 
-function setNotifStyle(style, btn) {
-  appState.notifStyle = style;
-  const name = appState.user ? appState.user.fname : 'บาฆอรี';
-  document.getElementById('notif-preview').textContent = MSG_PREVIEWS[style](name);
-  document.querySelectorAll('[id^="notif-"]').forEach(b => b.className = 'btn btn-outline btn-full');
-  btn.className = 'btn btn-primary btn-full';
+function saveDcModal() {
+  const u=gv('mwhu'); if(!u){toast('⚠️ ใส่ URL ก่อน');return;}
+  localStorage.setItem('wh',u); closeModal('modal-discord');
+  qs('notif-badge').style.display='none';
+  toast('✅ บันทึก Discord Webhook แล้ว');
 }
 
-function saveIconSettings() {
-  saveState();
-  toast('✅ บันทึกการตั้งค่า Icon แล้ว');
+function initFB() {
+  const cfg={apiKey:gv('fb1'),authDomain:gv('fb2'),projectId:gv('fb3'),storageBucket:gv('fb4'),messagingSenderId:gv('fb5'),appId:gv('fb6')};
+  if(!cfg.apiKey){toast('⚠️ ใส่ API Key ก่อน');return;}
+  try{
+    const app=firebase.initializeApp(cfg,'custom');
+    db=firebase.firestore(app);
+    toast('✅ เชื่อมต่อ Firebase สำเร็จ!');
+  }catch(e){toast('❌ Firebase Error: '+e.message);}
 }
 
-function loadIconSettings() {
-  ['tree','house','city','car'].forEach(name => {
-    const el = document.getElementById('ic-' + name);
-    if (el) el.classList.toggle('selected', appState.selectedIcon === name);
+// =========================================
+// DARK MODE
+// =========================================
+function toggleDark() {
+  const h=document.documentElement, isDark=h.getAttribute('data-theme')==='dark';
+  h.setAttribute('data-theme',isDark?'':'dark');
+  qs('dtog').classList.toggle('on',!isDark);
+  localStorage.setItem('btheme',isDark?'light':'dark');
+}
+
+// =========================================
+// BROWSER NOTIFICATIONS + SCHEDULE (2 min before)
+// =========================================
+async function reqNotifPerm() {
+  if (!('Notification' in window)) return false;
+  if (Notification.permission==='granted') return true;
+  if (Notification.permission!=='denied') {
+    const p = await Notification.requestPermission();
+    return p==='granted';
+  }
+  return false;
+}
+
+function scheduleNotifications() {
+  // Clear old timers
+  notifTimers.forEach(t=>clearTimeout(t));
+  notifTimers = [];
+
+  const acts = S.acts;
+  if (!acts||!acts.length) return;
+
+  const now = new Date();
+
+  acts.forEach(a=>{
+    if (!a.start) return;
+    const [h,m] = a.start.split(':').map(Number);
+    const target = new Date(now);
+    target.setHours(h,m,0,0);
+
+    // 2 min before
+    const notifTime = new Date(target.getTime() - 2*60*1000);
+    const msUntil = notifTime.getTime() - now.getTime();
+
+    if (msUntil > 0) {
+      const tid = setTimeout(async ()=>{
+        const perm = await reqNotifPerm();
+        if (perm) {
+          new Notification('แบยี ต้องมีวินัย 🕌', {
+            body: `⏰ อีก 2 นาที! ถึงเวลา "${a.name}" แล้ว (${a.start} น.)\n🎯 ${a.goal||''}`,
+            icon: 'https://scontent.fhdy4-1.fna.fbcdn.net/v/t39.30808-6/696187910_122100299517312449_1965577196789858038_n.jpg?stp=dst-jpg_s720x720_tt6&_nc_cat=110&ccb=1-7&_nc_sid=127cfc&_nc_ohc=c-6fvCemw7EQ7kNvwE0oK-P&oh=00_Af5lvpdV7XQPivfj_L6UBOVH_WYQAl4zsMsOVPN8fJh0Rg&oe=6A14F764',
+            badge: 'https://scontent.fhdy4-1.fna.fbcdn.net/v/t39.30808-6/696187910_122100299517312449_1965577196789858038_n.jpg?stp=dst-jpg_s720x720_tt6&_nc_cat=110&ccb=1-7&_nc_sid=127cfc&_nc_ohc=c-6fvCemw7EQ7kNvwE0oK-P&oh=00_Af5lvpdV7XQPivfj_L6UBOVH_WYQAl4zsMsOVPN8fJh0Rg&oe=6A14F764',
+            tag: 'bayi-'+a.start,
+            requireInteraction: true
+          });
+        }
+        // Also send Discord at actual start time
+        const startDelay = target.getTime() - new Date().getTime();
+        if (startDelay > 0) {
+          setTimeout(()=>{
+            const n=S.user?S.user.fname:'ผู้ใช้';
+            sendDC(MPREV[S.notifStyle||'cheer'](n)+`\n⏰ ถึงเวลา ${a.start} น. สำหรับ "${a.name}" แล้ว!`);
+          }, startDelay);
+        }
+      }, msUntil);
+      notifTimers.push(tid);
+    }
   });
 }
 
-// =============================================
-//   DISCORD
-// =============================================
-function saveWebhook() {
-  const url = v('webhook-url');
-  if (!url) { toast('⚠️ ใส่ Webhook URL'); return; }
-  DISCORD_WEBHOOK = url;
-  localStorage.setItem('discord_webhook', url);
-  toast('✅ บันทึก Webhook แล้ว');
+// =========================================
+// MODAL
+// =========================================
+function openModal(id) { qs(id).classList.add('show'); }
+function closeModal(id) { qs(id).classList.remove('show'); }
+
+// =========================================
+// UTILS
+// =========================================
+function qs(id) { return document.getElementById(id); }
+function gv(id) { const e=qs(id); return e?e.value.trim():''; }
+
+let toastTimer;
+function toast(msg,dur=2500) {
+  const t=qs('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),dur);
 }
 
-async function testWebhook() {
-  const name = appState.user ? appState.user.fname : 'บาฆอรี';
-  const msg = MSG_PREVIEWS[appState.notifStyle](name);
-  await sendDiscordNotif('🧪 ทดสอบ: ' + msg);
+function eye(id,btn) {
+  const e=qs(id);
+  if(e.type==='password'){e.type='text';btn.textContent='🙈';}
+  else{e.type='password';btn.textContent='👁';}
 }
 
-async function sendDiscordNotif(msg) {
-  const url = localStorage.getItem('discord_webhook') || DISCORD_WEBHOOK;
-  if (!url || url === 'YOUR_DISCORD_WEBHOOK_URL') return;
-  try {
-    await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: msg })
-    });
-  } catch(e) { console.warn('Discord notif failed:', e); }
+function todayKey() {
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
-// =============================================
-//   DARK MODE
-// =============================================
-function toggleDark() {
-  const html = document.documentElement;
-  const isDark = html.getAttribute('data-theme') === 'dark';
-  html.setAttribute('data-theme', isDark ? '' : 'dark');
-  document.getElementById('dark-toggle').classList.toggle('on', !isDark);
-  localStorage.setItem('bayi_theme', isDark ? 'light' : 'dark');
+function thaiDate() {
+  const now=new Date();
+  const mns=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  return now.getDate()+' '+mns[now.getMonth()]+' พ.ศ.'+(now.getFullYear()+543);
 }
 
-// =============================================
-//   FIREBASE (from settings)
-// =============================================
-function initFirebaseFromSettings() {
-  const cfg = {
-    apiKey: v('fb-apikey'), authDomain: v('fb-authdomain'),
-    projectId: v('fb-projectid'), storageBucket: v('fb-bucket'),
-    messagingSenderId: v('fb-senderid'), appId: v('fb-appid'),
-  };
-  if (!cfg.apiKey) { toast('⚠️ ใส่ API Key ก่อน'); return; }
-  try {
-    if (!firebase.apps.length) firebase.initializeApp(cfg);
-    else firebase.app();
-    toast('✅ เชื่อมต่อ Firebase สำเร็จ!');
-  } catch(e) { toast('❌ Firebase Error: ' + e.message); }
-}
+// =========================================
+// INIT
+// =========================================
+loadS();
 
-function initSupabaseFromSettings() {
-  const url = v('sb-url'), key = v('sb-key');
-  if (!url || !key) { toast('⚠️ ใส่ URL และ Key ก่อน'); return; }
-  localStorage.setItem('supabase_url', url);
-  localStorage.setItem('supabase_key', key);
-  toast('✅ บันทึก Supabase Config แล้ว (ต้องติดตั้ง @supabase/supabase-js)');
-}
+// Theme
+const th=localStorage.getItem('btheme');
+if(th==='dark'){ document.documentElement.setAttribute('data-theme','dark'); const d=qs('dtog'); if(d)d.classList.add('on'); }
 
-// =============================================
-//   UTILS
-// =============================================
-function v(id) { return document.getElementById(id) ? document.getElementById(id).value.trim() : ''; }
-
-function toast(msg, dur=2500) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.style.display = 'block';
-  setTimeout(() => t.style.display = 'none', dur);
-}
-
-function toggleEye(inputId, btn) {
-  const inp = document.getElementById(inputId);
-  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
-  else { inp.type = 'password'; btn.textContent = '👁'; }
-}
-
-// =============================================
-//   INIT
-// =============================================
-loadState();
-
-// Apply theme
-const savedTheme = localStorage.getItem('bayi_theme');
-if (savedTheme === 'dark') {
-  document.documentElement.setAttribute('data-theme', 'dark');
-  const dt = document.getElementById('dark-toggle');
-  if (dt) dt.classList.add('on');
-}
-
-// Auto-login if user exists
-if (appState.user) {
-  showPage('page-main');
+// Start page
+if (S.user) {
+  go('pm');
+  // Check Discord
+  if (!localStorage.getItem('wh')) {
+    setTimeout(()=>openModal('modal-discord'),1200);
+    const nb=qs('notif-badge'); if(nb)nb.style.display='block';
+  }
+  // Request notif permission
+  reqNotifPerm().then(ok=>{ if(!ok){ const nb=qs('notif-badge'); if(nb)nb.style.display='block'; } });
+  scheduleNotifications();
 } else {
-  showPage('page-welcome');
+  go('pw');
 }
 
-// Webhook from storage
-const savedWH = localStorage.getItem('discord_webhook');
-if (savedWH) {
-  const wh = document.getElementById('webhook-url');
-  if (wh) wh.value = savedWH;
-}
+// Re-schedule notifications every minute (in case date changes)
+setInterval(scheduleNotifications, 60*1000);
 </script>
 </body>
 </html>
